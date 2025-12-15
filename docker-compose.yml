@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:17.3
+    container_name: book-shelf-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:${DB_PORT_INTERNAL}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks: [ net ]
+  migrations:
+    image: migrate/migrate:latest
+    container_name: migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    environment:
+      DB_URL: ${DB_URL}
+    entrypoint: >
+      sh -c '
+        migrate -path /migrations -database "$$DB_URL" up;
+      '
+    networks: [ net ]
+  service:
+    container_name: book-shelf-service
+    image: book-shelf-service:latest
+    volumes:
+      - ./.env:/app/.env
+      - ./config/config.yaml:/app/config/config.yaml
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: service
+    ports:
+      - "${HTTP_PORT}:${HTTP_PORT}"
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    command: [ "/service" ]
+    networks: [ net ]
+
+volumes:
+  postgres_data:
+
+networks:
+  net:

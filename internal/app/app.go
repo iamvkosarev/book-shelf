@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/iamvkosarev/book-shelf/config"
+	"github.com/iamvkosarev/book-shelf/internal/storage/postgres"
 	"github.com/iamvkosarev/book-shelf/pkg/logs"
 	"net/http"
 	"os"
@@ -14,8 +15,10 @@ import (
 )
 
 func Run(cfg *config.Config) error {
+	var joinedErrors error
 	log, err := logs.NewSlogLogger(cfg.App.LogMode, os.Stdout)
 	if err != nil {
+		joinedErrors = errors.Join(joinedErrors, fmt.Errorf("failed to initialize logger: %w", err))
 		return err
 	}
 	mux := http.NewServeMux()
@@ -25,13 +28,20 @@ func Run(cfg *config.Config) error {
 		Handler: mux,
 		Addr:    address,
 	}
-	var joinedErrors error
 	ctx, cancel := context.WithCancel(context.Background())
+
+	pool, err := postgres.NewPool(ctx, cfg.Database)
+	if err != nil {
+		joinedErrors = errors.Join(joinedErrors, fmt.Errorf("failed to initialize postgres pool: %w", err))
+		cancel()
+	} else {
+		log.Info("start connect postgres")
+	}
 
 	go func() {
 		log.Info("start server")
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errors.Join(joinedErrors, fmt.Errorf("server err: %w", err))
+			joinedErrors = errors.Join(joinedErrors, fmt.Errorf("server err: %w", err))
 			cancel()
 		}
 	}()
@@ -52,14 +62,24 @@ func Run(cfg *config.Config) error {
 	stopCtx, termCancel := context.WithTimeout(context.Background(), cfg.App.ShutdownTimeout)
 	defer termCancel()
 
+	log.Info("start shutdown")
 	wg.Add(1)
-
 	go func() {
 		defer wg.Done()
 		if shutdownErr := server.Shutdown(stopCtx); err != nil {
 			err = errors.Join(err, shutdownErr)
 		}
 		log.Info("stop server")
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if pool == nil {
+			return
+		}
+		pool.Close()
+		log.Info("stop connect postgres")
 	}()
 
 	go func() {
@@ -69,7 +89,7 @@ func Run(cfg *config.Config) error {
 
 	select {
 	case <-wgChan:
-		log.Info("finish wait group")
+		log.Info("stop shutdown")
 	case <-stopCtx.Done():
 		log.Info("finish context: timeout")
 	}
