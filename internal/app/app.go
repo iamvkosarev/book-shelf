@@ -4,14 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/iamvkosarev/book-shelf/config"
+	"github.com/iamvkosarev/book-shelf/internal/router"
 	"github.com/iamvkosarev/book-shelf/internal/storage/postgres"
 	"github.com/iamvkosarev/book-shelf/pkg/logs"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 )
 
 func Run(cfg *config.Config) error {
@@ -21,12 +25,15 @@ func Run(cfg *config.Config) error {
 		joinedErrors = errors.Join(joinedErrors, fmt.Errorf("failed to initialize logger: %w", err))
 		return err
 	}
-	mux := http.NewServeMux()
+	slog.SetDefault(log)
+	newRouter := mux.NewRouter()
 
-	address := fmt.Sprintf("localhost:%s", cfg.Http.Port)
+	address := fmt.Sprintf(":%s", cfg.Http.Port)
 	server := &http.Server{
-		Handler: mux,
-		Addr:    address,
+		Handler:      newRouter,
+		Addr:         address,
+		ReadTimeout:  cfg.Http.ReadTimeout * time.Second,
+		WriteTimeout: cfg.Http.WriteTimeout * time.Second,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -38,8 +45,10 @@ func Run(cfg *config.Config) error {
 		log.Info("start connect postgres")
 	}
 
+	router.Setup(newRouter, router.Deps{}, cfg.Router)
+
 	go func() {
-		log.Info("start server")
+		log.Info("start server", slog.String("address", address))
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			joinedErrors = errors.Join(joinedErrors, fmt.Errorf("server err: %w", err))
 			cancel()

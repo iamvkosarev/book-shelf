@@ -1,3 +1,5 @@
 app:
   shutdown_timeout: 5s
   log_mode: "debug" # debug, dev or prod
+router:
+  api_timeout: 5s

@@ -10,7 +10,13 @@ type Database struct {
 }
 
 type Http struct {
-	Port string `env:"HTTP_PORT"`
+	Port         string        `env:"HTTP_PORT"`
+	ReadTimeout  time.Duration `yaml:"read_timeout" default:"5s"`
+	WriteTimeout time.Duration `yaml:"write_timeout" default:"5s"`
+}
+
+type Router struct {
+	APITimeout time.Duration `yaml:"api_timeout" default:"5s"`
 }
 
 type App struct {
@@ -19,7 +25,8 @@ type App struct {
 }
 
 type Config struct {
-	Http     Http `yaml:"http"`
+	Http     Http   `yaml:"http"`
+	Router   Router `yaml:"router"`
 	Database Database
 	App      App `yaml:"app"`
 }
