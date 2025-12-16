@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/iamvkosarev/book-shelf/config"
+	"github.com/iamvkosarev/book-shelf/internal/handler"
 	"github.com/iamvkosarev/book-shelf/internal/router"
 	"github.com/iamvkosarev/book-shelf/internal/storage/postgres"
+	"github.com/iamvkosarev/book-shelf/internal/usecase"
 	"github.com/iamvkosarev/book-shelf/pkg/logs"
 	"log/slog"
 	"net/http"
@@ -45,7 +47,11 @@ func Run(cfg *config.Config) error {
 		log.Info("start connect postgres")
 	}
 
-	router.Setup(newRouter, router.Deps{}, cfg.Router)
+	publishersStorage := postgres.NewPublishersStorage(pool)
+	publishersUsecase := usecase.NewPublishersUsecase(publishersStorage)
+	publisherHandler := handler.NewPublisherHandler(publishersUsecase)
+
+	router.Setup(newRouter, router.Deps{PublisherHandler: publisherHandler}, cfg.Router)
 
 	go func() {
 		log.Info("start server", slog.String("address", address))
