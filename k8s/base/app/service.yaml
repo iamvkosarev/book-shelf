@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: book-shelf
+  namespace: book-shelf
+spec:
+  selector:
+    app: book-shelf
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8081
+  type: ClusterIP

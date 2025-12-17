@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: book-shelf
+
+resources:
+  - ../../base
+
+secretGenerator:
+  - name: book-shelf-envfile
+    files:
+      - .env=app.env
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+images:
+  - name: docker.io/iamvkosarev/book-shelf
+    newTag: latest
+
+replicas:
+  - name: book-shelf
+    count: 1

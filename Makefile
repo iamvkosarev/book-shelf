@@ -21,3 +21,17 @@ migration-create:
 		echo "Need argument 'name=...'" && exit 1; \
 	fi
 	@migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)
+
+build-image:
+	docker buildx build --platform linux/amd64 -t iamvkosarev/book-shelf:latest --push .
+
+push-image:
+	docker push $(USER_NAME)/book-shelf:latest
+
+apply-prod:
+	kubectl apply -k k8s/overlays/prod
+	kubectl -n book-shelf rollout restart deployment/book-shelf
+
+apply-local:
+	kubectl apply -k k8s/overlays/local
+	kubectl -n book-shelf rollout restart deployment/book-shelf

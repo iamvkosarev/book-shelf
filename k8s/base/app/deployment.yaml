@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: book-shelf
+  namespace: book-shelf
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: book-shelf
+  template:
+    metadata:
+      labels:
+        app: book-shelf
+    spec:
+      containers:
+        - name: app
+          image: docker.io/iamvkosarev/book-shelf
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: book-shelf-env
+
+          ports:
+            - containerPort: 8081
+              name: http
+
+          args: ["-env", "/etc/app/.env"]
+
+          volumeMounts:
+            - name: envfile
+              mountPath: /etc/app/.env
+              subPath: .env
+              readOnly: true
+
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+      volumes:
+        - name: envfile
+          secret:
+            secretName: book-shelf-envfile
+            items:
+              - key: .env
+                path: .env
