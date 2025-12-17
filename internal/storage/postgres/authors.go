@@ -13,7 +13,12 @@ import (
 	"strings"
 )
 
-const tableAuthors = "authors"
+const (
+	tableAuthors = "authors"
+
+	columnPersonID  = "person_id"
+	columnPseudonym = "pseudonym"
+)
 
 type AuthorsStorage struct {
 	pool *pgxpool.Pool

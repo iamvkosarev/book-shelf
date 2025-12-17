@@ -11,7 +11,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const tablePersons = "persons"
+const (
+	tablePersons = "persons"
+
+	columnFirstName  = "first_name"
+	columnLastName   = "last_name"
+	columnMiddleName = "middle_name"
+)
 
 type PersonsStorage struct {
 	pool *pgxpool.Pool
