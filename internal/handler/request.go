@@ -6,6 +6,12 @@ import (
 	"net/http"
 )
 
+const (
+	VarID          = "id"
+	VarExpend      = "expand"
+	VarValuePerson = "person"
+)
+
 func decode[t interface{}](
 	writer http.ResponseWriter,
 	request *http.Request,

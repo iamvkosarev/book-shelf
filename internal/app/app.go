@@ -46,12 +46,25 @@ func Run(cfg *config.Config) error {
 	} else {
 		log.Info("start connect postgres")
 	}
+	personsStorage := postgres.NewPersonsStorage(pool)
+	personsUsecase := usecase.NewPersonsUsecase(personsStorage)
+	personsHandler := handler.NewPersonHandler(personsUsecase)
+
+	authorsStorage := postgres.NewAuthorsStorage(pool)
+	authorsUsecase := usecase.NewAuthorsUsecase(authorsStorage, personsUsecase)
+	authorsHandler := handler.NewAuthorHandler(authorsUsecase)
 
 	publishersStorage := postgres.NewPublishersStorage(pool)
 	publishersUsecase := usecase.NewPublishersUsecase(publishersStorage)
 	publisherHandler := handler.NewPublisherHandler(publishersUsecase)
 
-	router.Setup(newRouter, router.Deps{PublisherHandler: publisherHandler}, cfg.Router)
+	router.Setup(
+		newRouter, cfg.Router, router.Deps{
+			PublishersHandler: publisherHandler,
+			AuthorsHandler:    authorsHandler,
+			PersonsHandler:    personsHandler,
+		},
+	)
 
 	go func() {
 		log.Info("start server", slog.String("address", address))

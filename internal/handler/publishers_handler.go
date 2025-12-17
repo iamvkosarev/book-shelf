@@ -11,6 +11,11 @@ import (
 	"net/http"
 )
 
+const (
+	InvalidPublisherID = "invalid publisher id"
+	MissingPublisherID = "missing publisher id"
+)
+
 type PublisherUsecase interface {
 	AddPublisher(ctx context.Context, name string) (uuid.UUID, error)
 	GetPublisher(ctx context.Context, id uuid.UUID) (model.Publisher, error)
@@ -59,15 +64,15 @@ func (p PublisherHandler) AddPublisher(writer http.ResponseWriter, request *http
 }
 
 func (p PublisherHandler) GetPublisher(writer http.ResponseWriter, request *http.Request) {
-	idStr := mux.Vars(request)["id"]
+	idStr := mux.Vars(request)[VarID]
 	if idStr == "" {
-		sendBadRequest(writer, "missing publisher id")
+		sendBadRequest(writer, MissingPublisherID)
 		return
 	}
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		sendBadRequest(writer, "invalid publisher id")
+		sendBadRequest(writer, InvalidPublisherID)
 		return
 	}
 	publisher, err := p.publisherUsecase.GetPublisher(request.Context(), id)
@@ -85,15 +90,15 @@ func (p PublisherHandler) GetPublisher(writer http.ResponseWriter, request *http
 }
 
 func (p PublisherHandler) RemovePublisher(writer http.ResponseWriter, request *http.Request) {
-	idStr := mux.Vars(request)["id"]
+	idStr := mux.Vars(request)[VarID]
 	if idStr == "" {
-		sendBadRequest(writer, "missing publisher id")
+		sendBadRequest(writer, MissingPublisherID)
 		return
 	}
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		sendBadRequest(writer, "invalid publisher id")
+		sendBadRequest(writer, InvalidPublisherID)
 		return
 	}
 
@@ -141,15 +146,15 @@ type UpdatePublisherRequest struct {
 }
 
 func (p PublisherHandler) UpdatePublisher(writer http.ResponseWriter, request *http.Request) {
-	idStr := mux.Vars(request)["id"]
+	idStr := mux.Vars(request)[VarID]
 	if idStr == "" {
-		sendBadRequest(writer, "missing publisher id")
+		sendBadRequest(writer, MissingPublisherID)
 		return
 	}
 
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		sendBadRequest(writer, "invalid publisher id")
+		sendBadRequest(writer, InvalidPublisherID)
 		return
 	}
 	var requestData UpdatePublisherRequest

@@ -11,12 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const (
-	tablePublishers = "publishers"
-
-	columnID   = "id"
-	columnName = "name"
-)
+const tablePublishers = "publishers"
 
 type PublishersStorage struct {
 	pool *pgxpool.Pool
@@ -98,7 +93,7 @@ func (p *PublishersStorage) UpdatePublisher(ctx context.Context, id uuid.UUID, p
 }
 
 func (p *PublishersStorage) RemovePublisher(ctx context.Context, id uuid.UUID) error {
-	sql, args, err := p.psql.Delete(tablePublishers).From(tablePublishers).Where(squirrel.Eq{columnID: id}).ToSql()
+	sql, args, err := p.psql.Delete(tablePublishers).Where(squirrel.Eq{columnID: id}).ToSql()
 	if err != nil {
 		return err
 	}
