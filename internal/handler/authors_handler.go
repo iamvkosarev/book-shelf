@@ -67,7 +67,7 @@ func (p AuthorHandler) AddAuthor(writer http.ResponseWriter, request *http.Reque
 type AuthorResponse struct {
 	ID             uuid.UUID       `json:"id"`
 	PersonID       uuid.UUID       `json:"person_id"`
-	Pseudonym      string          `json:"pseudonym"`
+	Pseudonym      string          `json:"pseudonym" validate:"min=0,max=100"`
 	PersonResponse *PersonResponse `json:"person"`
 }
 
@@ -172,7 +172,7 @@ func (p AuthorHandler) ListAuthors(writer http.ResponseWriter, request *http.Req
 
 type UpdateAuthorRequest struct {
 	PersonID  uuid.UUID `json:"person_id"`
-	Pseudonym string    `json:"pseudonym"`
+	Pseudonym string    `json:"pseudonym" validate:"min=0,max=100"`
 }
 
 func (p AuthorHandler) UpdateAuthor(writer http.ResponseWriter, request *http.Request) {

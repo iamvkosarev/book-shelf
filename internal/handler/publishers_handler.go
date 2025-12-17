@@ -37,7 +37,7 @@ func NewPublisherHandler(usecase PublisherUsecase) *PublisherHandler {
 }
 
 type AddPublisherRequest struct {
-	Name string `json:"name" validate:"required,lte=50,gt=0"`
+	Name string `json:"name" validate:"required,min=1,max=50"`
 }
 
 type AddPublisherResponse struct {
@@ -142,7 +142,7 @@ func (p PublisherHandler) ListPublishers(writer http.ResponseWriter, request *ht
 }
 
 type UpdatePublisherRequest struct {
-	Name string `json:"name" validate:"lte=50,gte=0"`
+	Name string `json:"name" validate:"required,min=1,max=50"`
 }
 
 func (p PublisherHandler) UpdatePublisher(writer http.ResponseWriter, request *http.Request) {

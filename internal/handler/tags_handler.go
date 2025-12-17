@@ -37,7 +37,7 @@ func NewTagHandler(usecase TagUsecase) *TagHandler {
 }
 
 type AddTagRequest struct {
-	Name string `json:"name" validate:"required,lte=50,gt=0"`
+	Name string `json:"name" validate:"required,min=1,max=50"`
 }
 
 type AddTagResponse struct {
@@ -142,7 +142,7 @@ func (p TagHandler) ListTags(writer http.ResponseWriter, request *http.Request) 
 }
 
 type UpdateTagRequest struct {
-	Name string `json:"name" validate:"lte=50,gte=0"`
+	Name string `json:"name" validate:"required,min=1,max=50"`
 }
 
 func (p TagHandler) UpdateTag(writer http.ResponseWriter, request *http.Request) {

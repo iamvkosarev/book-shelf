@@ -37,9 +37,9 @@ func NewPersonHandler(usecase PersonUsecase) *PersonHandler {
 }
 
 type AddPersonRequest struct {
-	FirstName  string `json:"first_name" validate:"required,lte=100,gt=0"`
-	LastName   string `json:"last_name" validate:"required,lte=100,gt=0"`
-	MiddleName string `json:"middle_name" validate:"required,lte=100,gte=0"`
+	FirstName  string `json:"first_name" validate:"required,min=1,max=100"`
+	LastName   string `json:"last_name" validate:"required,min=1,max=100"`
+	MiddleName string `json:"middle_name" validate:"required,min=0,max=100"`
 }
 
 type AddPersonResponse struct {
@@ -150,9 +150,9 @@ func (p PersonHandler) ListPersons(writer http.ResponseWriter, request *http.Req
 }
 
 type UpdatePersonRequest struct {
-	FirstName  string `json:"first_name" validate:"lte=100,gte=0"`
-	LastName   string `json:"last_name" validate:"lte=100,gte=0"`
-	MiddleName string `json:"middle_name" validate:"lte=100,gte=0"`
+	FirstName  string `json:"first_name" validate:"min=1,max=100"`
+	LastName   string `json:"last_name" validate:"min=1,max=100"`
+	MiddleName string `json:"middle_name" validate:"min=0,max=100"`
 }
 
 func (p PersonHandler) UpdatePerson(writer http.ResponseWriter, request *http.Request) {
