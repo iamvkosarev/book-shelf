@@ -11,22 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const tableGenres = "genres"
+const tableTags = "tags"
 
-type GenresStorage struct {
+type TagsStorage struct {
 	pool *pgxpool.Pool
 	psql squirrel.StatementBuilderType
 }
 
-func NewGenresStorage(pool *pgxpool.Pool) *GenresStorage {
-	return &GenresStorage{
+func NewTagsStorage(pool *pgxpool.Pool) *TagsStorage {
+	return &TagsStorage{
 		pool: pool,
 		psql: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 }
 
-func (p *GenresStorage) AddGenre(ctx context.Context, name string) (uuid.UUID, error) {
-	sql, args, err := p.psql.Insert(tableGenres).Columns(columnName).Values(name).Suffix(
+func (p *TagsStorage) AddTag(ctx context.Context, name string) (uuid.UUID, error) {
+	sql, args, err := p.psql.Insert(tableTags).Columns(columnName).Values(name).Suffix(
 		"RETURNING " + columnID,
 	).ToSql()
 	if err != nil {
@@ -38,7 +38,7 @@ func (p *GenresStorage) AddGenre(ctx context.Context, name string) (uuid.UUID, e
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
 			case "23505":
-				return uuid.Nil, model.ErrGenreAlreadyExists
+				return uuid.Nil, model.ErrTagAlreadyExists
 			}
 		}
 		return uuid.Nil, err
@@ -46,27 +46,27 @@ func (p *GenresStorage) AddGenre(ctx context.Context, name string) (uuid.UUID, e
 	return id, nil
 }
 
-func (p *GenresStorage) GetGenre(ctx context.Context, id uuid.UUID) (model.Genre, error) {
+func (p *TagsStorage) GetTag(ctx context.Context, id uuid.UUID) (model.Tag, error) {
 	sql, args, err := p.psql.Select(
 		columnID, columnName,
-	).From(tableGenres).Where(squirrel.Eq{columnID: id}).ToSql()
+	).From(tableTags).Where(squirrel.Eq{columnID: id}).ToSql()
 	if err != nil {
-		return model.Genre{}, err
+		return model.Tag{}, err
 	}
-	var genre model.Genre
-	if err = p.pool.QueryRow(ctx, sql, args...).Scan(&genre.ID, &genre.Name); err != nil {
+	var tag model.Tag
+	if err = p.pool.QueryRow(ctx, sql, args...).Scan(&tag.ID, &tag.Name); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.Genre{}, model.ErrGenreNotFound
+			return model.Tag{}, model.ErrTagNotFound
 		}
-		return model.Genre{}, err
+		return model.Tag{}, err
 	}
-	return genre, nil
+	return tag, nil
 }
 
-func (p *GenresStorage) UpdateGenre(ctx context.Context, id uuid.UUID, genre model.Genre) error {
+func (p *TagsStorage) UpdateTag(ctx context.Context, id uuid.UUID, tag model.Tag) error {
 	sql, args, err := p.psql.
-		Update(tableGenres).
-		Set(columnName, genre.Name).
+		Update(tableTags).
+		Set(columnName, tag.Name).
 		Where(squirrel.Eq{columnID: id}).
 		ToSql()
 	if err != nil {
@@ -79,21 +79,21 @@ func (p *GenresStorage) UpdateGenre(ctx context.Context, id uuid.UUID, genre mod
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
 			case "23505":
-				return model.ErrGenreAlreadyExists
+				return model.ErrTagAlreadyExists
 			}
 		}
 		return err
 	}
 
 	if ct.RowsAffected() == 0 {
-		return model.ErrGenreNotFound
+		return model.ErrTagNotFound
 	}
 
 	return nil
 }
 
-func (p *GenresStorage) RemoveGenre(ctx context.Context, id uuid.UUID) error {
-	sql, args, err := p.psql.Delete(tableGenres).Where(squirrel.Eq{columnID: id}).ToSql()
+func (p *TagsStorage) RemoveTag(ctx context.Context, id uuid.UUID) error {
+	sql, args, err := p.psql.Delete(tableTags).Where(squirrel.Eq{columnID: id}).ToSql()
 	if err != nil {
 		return err
 	}
@@ -103,8 +103,8 @@ func (p *GenresStorage) RemoveGenre(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (p *GenresStorage) ListGenres(ctx context.Context) ([]model.Genre, error) {
-	sql, args, err := p.psql.Select(columnID, columnName).From(tableGenres).ToSql()
+func (p *TagsStorage) ListTags(ctx context.Context) ([]model.Tag, error) {
+	sql, args, err := p.psql.Select(columnID, columnName).From(tableTags).ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -113,16 +113,16 @@ func (p *GenresStorage) ListGenres(ctx context.Context) ([]model.Genre, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var genres []model.Genre
+	var tags []model.Tag
 	for rows.Next() {
-		var genre model.Genre
-		if err = rows.Scan(&genre.ID, &genre.Name); err != nil {
+		var tag model.Tag
+		if err = rows.Scan(&tag.ID, &tag.Name); err != nil {
 			return nil, err
 		}
-		genres = append(genres, genre)
+		tags = append(tags, tag)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	return genres, nil
+	return tags, nil
 }

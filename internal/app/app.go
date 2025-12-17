@@ -58,16 +58,16 @@ func Run(cfg *config.Config) error {
 	publishersUsecase := usecase.NewPublishersUsecase(publishersStorage)
 	publisherHandler := handler.NewPublisherHandler(publishersUsecase)
 
-	genresStorage := postgres.NewGenresStorage(pool)
-	genresUsecase := usecase.NewGenresUsecase(genresStorage)
-	genreHandler := handler.NewGenreHandler(genresUsecase)
+	tagsStorage := postgres.NewTagsStorage(pool)
+	tagsUsecase := usecase.NewTagsUsecase(tagsStorage)
+	tagsHandler := handler.NewTagHandler(tagsUsecase)
 
 	router.Setup(
 		newRouter, cfg.Router, router.Deps{
 			PublishersHandler: publisherHandler,
 			AuthorsHandler:    authorsHandler,
 			PersonsHandler:    personsHandler,
-			GenresHandler:     genreHandler,
+			TagsHandler:       tagsHandler,
 		},
 	)
 

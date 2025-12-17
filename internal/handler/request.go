@@ -7,9 +7,12 @@ import (
 )
 
 const (
-	VarID          = "id"
-	VarExpend      = "expand"
-	VarValuePerson = "person"
+	VarID                   = "id"
+	VarExpend               = "expand"
+	VarExpendValuePerson    = "person"
+	VarExpendValueAuthors   = "authors"
+	VarExpendValuePublisher = "publisher"
+	VarExpendValueTags      = "tags"
 )
 
 func decode[t interface{}](

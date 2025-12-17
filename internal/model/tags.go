@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Genre struct {
+type Tag struct {
 	ID   uuid.UUID
 	Name string
 }

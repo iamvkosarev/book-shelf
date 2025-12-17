@@ -15,8 +15,8 @@ var (
 	ErrAuthorAlreadyExists = NewInternalError(http.StatusConflict, "author already exists")
 	ErrAuthorNotFound      = NewInternalError(http.StatusNotFound, "author not found")
 
-	ErrGenreAlreadyExists = NewInternalError(http.StatusConflict, "genre already exists")
-	ErrGenreNotFound      = NewInternalError(http.StatusNotFound, "genre not found")
+	ErrTagAlreadyExists = NewInternalError(http.StatusConflict, "tag already exists")
+	ErrTagNotFound      = NewInternalError(http.StatusNotFound, "tag not found")
 )
 
 type InternalError struct {

@@ -12,7 +12,7 @@ type Deps struct {
 	PublishersHandler *handler.PublisherHandler
 	AuthorsHandler    *handler.AuthorHandler
 	PersonsHandler    *handler.PersonHandler
-	GenresHandler     *handler.GenreHandler
+	TagsHandler       *handler.TagHandler
 }
 
 func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
@@ -42,11 +42,11 @@ func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
 	rt.HandleFunc("/authors/{id}", deps.AuthorsHandler.UpdateAuthor).Methods(http.MethodPut)
 	rt.HandleFunc("/authors/{id}", deps.AuthorsHandler.RemoveAuthor).Methods(http.MethodDelete)
 
-	rt.HandleFunc("/genres", deps.GenresHandler.AddGenre).Methods(http.MethodPost)
-	rt.HandleFunc("/genres", deps.GenresHandler.ListGenres).Methods(http.MethodGet)
-	rt.HandleFunc("/genres/{id}", deps.GenresHandler.GetGenre).Methods(http.MethodGet)
-	rt.HandleFunc("/genres/{id}", deps.GenresHandler.UpdateGenre).Methods(http.MethodPut)
-	rt.HandleFunc("/genres/{id}", deps.GenresHandler.RemoveGenre).Methods(http.MethodDelete)
+	rt.HandleFunc("/tags", deps.TagsHandler.AddTag).Methods(http.MethodPost)
+	rt.HandleFunc("/tags", deps.TagsHandler.ListTags).Methods(http.MethodGet)
+	rt.HandleFunc("/tags/{id}", deps.TagsHandler.GetTag).Methods(http.MethodGet)
+	rt.HandleFunc("/tags/{id}", deps.TagsHandler.UpdateTag).Methods(http.MethodPut)
+	rt.HandleFunc("/tags/{id}", deps.TagsHandler.RemoveTag).Methods(http.MethodDelete)
 
 	return rt, nil
 }

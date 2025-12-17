@@ -85,7 +85,7 @@ func (p AuthorHandler) GetAuthor(writer http.ResponseWriter, request *http.Reque
 	}
 
 	expendStr := request.URL.Query().Get(VarExpend)
-	expendPersonData := expendStr == VarValuePerson
+	expendPersonData := expendStr == VarExpendValuePerson
 
 	author, err := p.authorUsecase.GetAuthor(request.Context(), id, expendPersonData)
 	if err != nil {
@@ -139,7 +139,7 @@ type ListAuthorsResponse struct {
 
 func (p AuthorHandler) ListAuthors(writer http.ResponseWriter, request *http.Request) {
 	expendStr := request.URL.Query().Get(VarExpend)
-	expendPersonData := expendStr == VarValuePerson
+	expendPersonData := expendStr == VarExpendValuePerson
 
 	authors, err := p.authorUsecase.ListAuthors(request.Context(), expendPersonData)
 	if err != nil {
