@@ -10,32 +10,29 @@ type Database struct {
 }
 
 type Http struct {
-	Port         string        `env:"HTTP_PORT"`
-	ReadTimeout  time.Duration `yaml:"read_timeout" default:"5s"`
-	WriteTimeout time.Duration `yaml:"write_timeout" default:"5s"`
+	Port         string        `env:"HTTP_PORT" env-default:"8081"`
+	ReadTimeout  time.Duration `env:"HTTP_READ_TIMEOUT" env-default:"5s"`
+	WriteTimeout time.Duration `env:"HTTP_WRITE_TIMEOUT" env-default:"5s"`
 }
 
 type Router struct {
-	APITimeout time.Duration `yaml:"api_timeout" default:"5s"`
+	APITimeout time.Duration `env:"API_TIMEOUT" env-default:"5s"`
 }
 
 type App struct {
-	ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
-	LogMode         string        `yaml:"log_mode" default:"debug"`
+	ShutdownTimeout time.Duration `env:"SHUTDOWN_TIMEOUT" env-default:"10s"`
+	LogMode         string        `env:"LOG_MODE" env-default:"debug"` // debug, dev or prod
 }
 
 type Config struct {
-	Http     Http   `yaml:"http"`
-	Router   Router `yaml:"router"`
+	Http     Http
+	Router   Router
 	Database Database
-	App      App `yaml:"app"`
+	App      App
 }
 
-func LoadConfig(cfgPath string) (*Config, error) {
+func LoadConfig() (*Config, error) {
 	var cfg Config
-	if err := cleanenv.ReadConfig(cfgPath, &cfg); err != nil {
-		return nil, err
-	}
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		return nil, err
 	}

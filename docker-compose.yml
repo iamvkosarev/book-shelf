@@ -36,9 +36,9 @@ services:
   service:
     container_name: book-shelf-service
     image: book-shelf-service:latest
-    volumes:
-      - ./.env:/app/.env
-      - ./config/config.yaml:/app/config/config.yaml
+    environment:
+      DB_URL: ${DB_URL}
+      HTTP_PORT: ${HTTP_PORT}
     build:
       context: .
       dockerfile: Dockerfile
