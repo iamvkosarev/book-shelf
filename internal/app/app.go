@@ -10,6 +10,7 @@ import (
 	"github.com/iamvkosarev/book-shelf/internal/router"
 	"github.com/iamvkosarev/book-shelf/internal/storage/postgres"
 	"github.com/iamvkosarev/book-shelf/internal/usecase"
+	"github.com/iamvkosarev/book-shelf/internal/usecase/books"
 	"github.com/iamvkosarev/book-shelf/pkg/logs"
 	"log/slog"
 	"net/http"
@@ -62,12 +63,17 @@ func Run(cfg *config.Config) error {
 	tagsUsecase := usecase.NewTagsUsecase(tagsStorage)
 	tagsHandler := handler.NewTagHandler(tagsUsecase)
 
+	booksStorage := postgres.NewBooksStorage(pool)
+	booksUsecase := books.NewBooksUsecase(booksStorage, authorsUsecase, publishersUsecase, tagsUsecase)
+	booksHandler := handler.NewBookHandler(booksUsecase)
+
 	router.Setup(
 		newRouter, cfg.Router, router.Deps{
 			PublishersHandler: publisherHandler,
 			AuthorsHandler:    authorsHandler,
 			PersonsHandler:    personsHandler,
 			TagsHandler:       tagsHandler,
+			BooksHandler:      booksHandler,
 		},
 	)
 

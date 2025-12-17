@@ -17,6 +17,10 @@ var (
 
 	ErrTagAlreadyExists = NewInternalError(http.StatusConflict, "tag already exists")
 	ErrTagNotFound      = NewInternalError(http.StatusNotFound, "tag not found")
+
+	ErrBookAlreadyExists = NewInternalError(http.StatusConflict, "book already exists")
+	ErrBookNotFound      = NewInternalError(http.StatusNotFound, "book not found")
+	ErrBookInvalidFields = NewInternalError(http.StatusBadRequest, "book invalid fields")
 )
 
 type InternalError struct {

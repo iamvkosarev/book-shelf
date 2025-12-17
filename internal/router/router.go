@@ -13,6 +13,7 @@ type Deps struct {
 	AuthorsHandler    *handler.AuthorHandler
 	PersonsHandler    *handler.PersonHandler
 	TagsHandler       *handler.TagHandler
+	BooksHandler      *handler.BookHandler
 }
 
 func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
@@ -47,6 +48,12 @@ func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
 	rt.HandleFunc("/tags/{id}", deps.TagsHandler.GetTag).Methods(http.MethodGet)
 	rt.HandleFunc("/tags/{id}", deps.TagsHandler.UpdateTag).Methods(http.MethodPut)
 	rt.HandleFunc("/tags/{id}", deps.TagsHandler.RemoveTag).Methods(http.MethodDelete)
+
+	rt.HandleFunc("/books", deps.BooksHandler.AddBook).Methods(http.MethodPost)
+	rt.HandleFunc("/books", deps.BooksHandler.ListBooks).Methods(http.MethodGet)
+	rt.HandleFunc("/books/{id}", deps.BooksHandler.GetBook).Methods(http.MethodGet)
+	rt.HandleFunc("/books/{id}", deps.BooksHandler.UpdateBook).Methods(http.MethodPut)
+	rt.HandleFunc("/books/{id}", deps.BooksHandler.RemoveBook).Methods(http.MethodDelete)
 
 	return rt, nil
 }
