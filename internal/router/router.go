@@ -12,6 +12,7 @@ type Deps struct {
 	PublishersHandler *handler.PublisherHandler
 	AuthorsHandler    *handler.AuthorHandler
 	PersonsHandler    *handler.PersonHandler
+	GenresHandler     *handler.GenreHandler
 }
 
 func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
@@ -40,6 +41,12 @@ func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
 	rt.HandleFunc("/authors/{id}", deps.AuthorsHandler.GetAuthor).Methods(http.MethodGet)
 	rt.HandleFunc("/authors/{id}", deps.AuthorsHandler.UpdateAuthor).Methods(http.MethodPut)
 	rt.HandleFunc("/authors/{id}", deps.AuthorsHandler.RemoveAuthor).Methods(http.MethodDelete)
+
+	rt.HandleFunc("/genres", deps.GenresHandler.AddGenre).Methods(http.MethodPost)
+	rt.HandleFunc("/genres", deps.GenresHandler.ListGenres).Methods(http.MethodGet)
+	rt.HandleFunc("/genres/{id}", deps.GenresHandler.GetGenre).Methods(http.MethodGet)
+	rt.HandleFunc("/genres/{id}", deps.GenresHandler.UpdateGenre).Methods(http.MethodPut)
+	rt.HandleFunc("/genres/{id}", deps.GenresHandler.RemoveGenre).Methods(http.MethodDelete)
 
 	return rt, nil
 }
