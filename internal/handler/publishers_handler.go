@@ -86,7 +86,7 @@ func (p PublisherHandler) GetPublisher(writer http.ResponseWriter, request *http
 		ID:   publisher.ID,
 		Name: publisher.Name,
 	}
-	sendCreatedJSON(writer, response)
+	sendOkJSON(writer, response)
 }
 
 func (p PublisherHandler) RemovePublisher(writer http.ResponseWriter, request *http.Request) {
@@ -107,7 +107,7 @@ func (p PublisherHandler) RemovePublisher(writer http.ResponseWriter, request *h
 		logs.Error("failed to remove publisher", err, slog.String("publisher_id", idStr))
 		return
 	}
-	sendOK(writer)
+	sendOk(writer)
 }
 
 type PublisherResponse struct {
@@ -138,7 +138,7 @@ func (p PublisherHandler) ListPublishers(writer http.ResponseWriter, request *ht
 		}
 	}
 
-	sendCreatedJSON(writer, response)
+	sendOkJSON(writer, response)
 }
 
 type UpdatePublisherRequest struct {
@@ -169,5 +169,5 @@ func (p PublisherHandler) UpdatePublisher(writer http.ResponseWriter, request *h
 		logs.Error("failed to update publisher", err)
 		return
 	}
-	sendOK(writer)
+	sendOk(writer)
 }

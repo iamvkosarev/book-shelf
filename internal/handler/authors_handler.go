@@ -109,7 +109,7 @@ func (p AuthorHandler) GetAuthor(writer http.ResponseWriter, request *http.Reque
 		}
 	}
 
-	sendCreatedJSON(writer, response)
+	sendOkJSON(writer, response)
 }
 
 func (p AuthorHandler) RemoveAuthor(writer http.ResponseWriter, request *http.Request) {
@@ -130,7 +130,7 @@ func (p AuthorHandler) RemoveAuthor(writer http.ResponseWriter, request *http.Re
 		logs.Error("failed to remove author", err, slog.String("author_id", idStr))
 		return
 	}
-	sendOK(writer)
+	sendOk(writer)
 }
 
 type ListAuthorsResponse struct {
@@ -167,7 +167,7 @@ func (p AuthorHandler) ListAuthors(writer http.ResponseWriter, request *http.Req
 		}
 	}
 
-	sendCreatedJSON(writer, response)
+	sendOkJSON(writer, response)
 }
 
 type UpdateAuthorRequest struct {
@@ -201,5 +201,5 @@ func (p AuthorHandler) UpdateAuthor(writer http.ResponseWriter, request *http.Re
 		logs.Error("failed to update author", err)
 		return
 	}
-	sendOK(writer)
+	sendOk(writer)
 }

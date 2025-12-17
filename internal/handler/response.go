@@ -38,8 +38,12 @@ func sendCreatedJSON(writer http.ResponseWriter, response any) {
 	sendJSON(writer, response, http.StatusCreated)
 }
 
-func sendOK(writer http.ResponseWriter) {
+func sendOk(writer http.ResponseWriter) {
 	writer.WriteHeader(http.StatusOK)
+}
+
+func sendOkJSON(writer http.ResponseWriter, response any) {
+	sendJSON(writer, response, http.StatusOK)
 }
 
 func sendJSON(writer http.ResponseWriter, response any, status int) {

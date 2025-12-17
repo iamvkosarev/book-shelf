@@ -97,7 +97,7 @@ func (p PersonHandler) GetPerson(writer http.ResponseWriter, request *http.Reque
 		LastName:   person.LastName,
 		MiddleName: person.MiddleName,
 	}
-	sendCreatedJSON(writer, response)
+	sendOkJSON(writer, response)
 }
 
 func (p PersonHandler) RemovePerson(writer http.ResponseWriter, request *http.Request) {
@@ -118,7 +118,7 @@ func (p PersonHandler) RemovePerson(writer http.ResponseWriter, request *http.Re
 		logs.Error("failed to remove person", err, slog.String("person_id", idStr))
 		return
 	}
-	sendOK(writer)
+	sendOk(writer)
 }
 
 type ListPersonsResponse struct {
@@ -146,7 +146,7 @@ func (p PersonHandler) ListPersons(writer http.ResponseWriter, request *http.Req
 		}
 	}
 
-	sendCreatedJSON(writer, response)
+	sendOkJSON(writer, response)
 }
 
 type UpdatePersonRequest struct {
@@ -181,5 +181,5 @@ func (p PersonHandler) UpdatePerson(writer http.ResponseWriter, request *http.Re
 		logs.Error("failed to update person", err)
 		return
 	}
-	sendOK(writer)
+	sendOk(writer)
 }

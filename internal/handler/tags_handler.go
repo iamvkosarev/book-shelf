@@ -86,7 +86,7 @@ func (p TagHandler) GetTag(writer http.ResponseWriter, request *http.Request) {
 		ID:   tag.ID,
 		Name: tag.Name,
 	}
-	sendCreatedJSON(writer, response)
+	sendOkJSON(writer, response)
 }
 
 func (p TagHandler) RemoveTag(writer http.ResponseWriter, request *http.Request) {
@@ -107,7 +107,7 @@ func (p TagHandler) RemoveTag(writer http.ResponseWriter, request *http.Request)
 		logs.Error("failed to remove tag", err, slog.String("tag_id", idStr))
 		return
 	}
-	sendOK(writer)
+	sendOk(writer)
 }
 
 type TagResponse struct {
@@ -138,7 +138,7 @@ func (p TagHandler) ListTags(writer http.ResponseWriter, request *http.Request) 
 		}
 	}
 
-	sendCreatedJSON(writer, response)
+	sendOkJSON(writer, response)
 }
 
 type UpdateTagRequest struct {
@@ -169,5 +169,5 @@ func (p TagHandler) UpdateTag(writer http.ResponseWriter, request *http.Request)
 		logs.Error("failed to update tag", err)
 		return
 	}
-	sendOK(writer)
+	sendOk(writer)
 }
