@@ -25,6 +25,8 @@ func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
 	)
 	rt.Use(middleware.LogProcessesEdges)
 
+	rt.HandleFunc("/healthz", HealthHandler).Methods(http.MethodGet)
+
 	rt.HandleFunc("/publishers", deps.PublishersHandler.AddPublisher).Methods(http.MethodPost)
 	rt.HandleFunc("/publishers", deps.PublishersHandler.ListPublishers).Methods(http.MethodGet)
 	rt.HandleFunc("/publishers/{id}", deps.PublishersHandler.GetPublisher).Methods(http.MethodGet)
@@ -56,4 +58,8 @@ func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
 	rt.HandleFunc("/books/{id}", deps.BooksHandler.RemoveBook).Methods(http.MethodDelete)
 
 	return rt, nil
+}
+
+func HealthHandler(writer http.ResponseWriter, _ *http.Request) {
+	writer.WriteHeader(http.StatusOK)
 }
