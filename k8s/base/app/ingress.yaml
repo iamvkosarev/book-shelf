@@ -19,3 +19,6 @@ spec:
                 name: book-shelf
                 port:
                   number: 80
+  tls:
+    - hosts:
+        - kosarev.app
