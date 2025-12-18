@@ -23,14 +23,17 @@ migration-create:
 	@migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)
 
 build-image:
-	docker buildx build --platform linux/amd64 -t iamvkosarev/book-shelf:latest --push .
+	docker buildx build --platform linux/amd64 -t $(USER_NAME)/book-shelf:latest --push .
 
-push-image:
-	docker push $(USER_NAME)/book-shelf:latest
+build-migration-image:
+	docker buildx build --platform linux/amd64 -t $(USER_NAME)/book-shelf-migrations:latest --push -f Dockerfile.migrations .
 
 apply-prod:
+	kubectl -n book-shelf delete job book-shelf-migrate --ignore-not-found
 	kubectl apply -k k8s/overlays/prod
+	kubectl -n book-shelf wait --for=condition=complete job/book-shelf-migrate --timeout=180s
 	kubectl -n book-shelf rollout restart deployment/book-shelf
+	kubectl -n book-shelf rollout status deployment/book-shelf
 
 apply-local:
 	kubectl apply -k k8s/overlays/local

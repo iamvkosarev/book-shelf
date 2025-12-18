@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
+  - migrate-job.yaml
   - app/service.yaml
   - app/deployment.yaml
   - app/ingress.yaml

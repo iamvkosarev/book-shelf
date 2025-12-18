@@ -17,6 +17,8 @@ generatorOptions:
 images:
   - name: docker.io/iamvkosarev/book-shelf
     newTag: latest
+  - name: docker.io/iamvkosarev/book-shelf-migrations
+    newTag: latest
 
 replicas:
   - name: book-shelf

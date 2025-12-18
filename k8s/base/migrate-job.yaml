@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: book-shelf-migrate
+  namespace: book-shelf
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+
+      initContainers:
+        - name: wait-db
+          image: postgres:17.3
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: book-shelf-env
+                  key: DB_URL
+          command: ["sh", "-c", "until pg_isready -d \"$DB_URL\"; do echo waiting for db; sleep 2; done"]
+
+      containers:
+        - name: migrate
+          image: iamvkosarev/book-shelf-migrations:latest
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: book-shelf-env
+                  key: DB_URL
