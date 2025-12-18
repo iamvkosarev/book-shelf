@@ -3,14 +3,17 @@ kind: Ingress
 metadata:
   name: book-shelf
   namespace: book-shelf
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
 spec:
   ingressClassName: nginx
   rules:
-    - host: api.kosarev.app
+    - host: kosarev.app
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          - path: /api/book-shelf(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: book-shelf
