@@ -14,5 +14,5 @@ spec:
     - name: https
       port: 443
       targetPort: 443
-      appProtocol: k8s.timeweb.cloud/proto-https
+      appProtocol: k8s.timeweb.cloud/proto-tcp
   type: LoadBalancer
