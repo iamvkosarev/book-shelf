@@ -64,7 +64,7 @@ func (p AuthorHandler) AddAuthor(writer http.ResponseWriter, request *http.Reque
 	}
 	id, err := p.authorUsecase.AddAuthor(request.Context(), input)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to add author", err)
 		return
 	}
@@ -94,7 +94,7 @@ func (p AuthorHandler) GetAuthor(writer http.ResponseWriter, request *http.Reque
 
 	author, err := p.authorUsecase.GetAuthor(request.Context(), id)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to get author", err, slog.String("author_id", idStr))
 		return
 	}
@@ -124,7 +124,7 @@ func (p AuthorHandler) RemoveAuthor(writer http.ResponseWriter, request *http.Re
 	}
 
 	if err = p.authorUsecase.RemoveAuthor(request.Context(), id); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to remove author", err, slog.String("author_id", idStr))
 		return
 	}
@@ -138,7 +138,7 @@ type ListAuthorsResponse struct {
 func (p AuthorHandler) ListAuthors(writer http.ResponseWriter, request *http.Request) {
 	authors, err := p.authorUsecase.ListAuthors(request.Context())
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to list authors", err)
 		return
 	}
@@ -193,7 +193,7 @@ func (p AuthorHandler) UpdateAuthor(writer http.ResponseWriter, request *http.Re
 	}
 
 	if err = p.authorUsecase.UpdateAuthor(request.Context(), id, input); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to update author", err, slog.String("author_id", idStr))
 		return
 	}

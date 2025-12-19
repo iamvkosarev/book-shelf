@@ -83,7 +83,7 @@ func (p BookHandler) AddBook(writer http.ResponseWriter, request *http.Request) 
 
 	id, err := p.bookUsecase.AddBook(request.Context(), input)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to add book", err)
 		return
 	}
@@ -124,7 +124,7 @@ func (p BookHandler) GetBook(writer http.ResponseWriter, request *http.Request) 
 
 	book, err := p.bookUsecase.GetBook(request.Context(), id, expendAuthorsData, expendTagsData, expendPublisherData)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to get book", err, slog.String("book_id", idStr))
 		return
 	}
@@ -148,7 +148,7 @@ func (p BookHandler) RemoveBook(writer http.ResponseWriter, request *http.Reques
 	}
 
 	if err = p.bookUsecase.RemoveBook(request.Context(), id); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to remove book", err, slog.String("book_id", idStr))
 		return
 	}
@@ -167,7 +167,7 @@ func (p BookHandler) ListBooks(writer http.ResponseWriter, request *http.Request
 
 	authors, err := parseQueryToUUIDs(request, VarAuthorID)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		return
 	}
 	authorsIDs := make([]string, 0, len(authors))
@@ -185,7 +185,7 @@ func (p BookHandler) ListBooks(writer http.ResponseWriter, request *http.Request
 		expendAuthorsData, expendTagsData, expendPublisherData,
 	)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to list books", err)
 		return
 	}
@@ -238,7 +238,7 @@ func (p BookHandler) UpdateBook(writer http.ResponseWriter, request *http.Reques
 		Price:       requestData.Price,
 	}
 	if err = p.bookUsecase.UpdateBook(request.Context(), id, patch); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to update book", err)
 		return
 	}

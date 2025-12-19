@@ -56,7 +56,7 @@ func (p TagHandler) AddTag(writer http.ResponseWriter, request *http.Request) {
 		request.Context(), requestData.Name,
 	)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to add tag", err)
 		return
 	}
@@ -77,7 +77,7 @@ func (p TagHandler) GetTag(writer http.ResponseWriter, request *http.Request) {
 	}
 	tag, err := p.tagUsecase.GetTag(request.Context(), id)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to get tag", err, slog.String("tag_id", idStr))
 		return
 	}
@@ -103,7 +103,7 @@ func (p TagHandler) RemoveTag(writer http.ResponseWriter, request *http.Request)
 	}
 
 	if err = p.tagUsecase.RemoveTag(request.Context(), id); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to remove tag", err, slog.String("tag_id", idStr))
 		return
 	}
@@ -124,7 +124,7 @@ func (p TagHandler) ListTags(writer http.ResponseWriter, request *http.Request) 
 		request.Context(),
 	)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to list tags", err)
 		return
 	}
@@ -165,7 +165,7 @@ func (p TagHandler) UpdateTag(writer http.ResponseWriter, request *http.Request)
 		return
 	}
 	if err = p.tagUsecase.UpdateTag(request.Context(), id, requestData.Name); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to update tag", err)
 		return
 	}

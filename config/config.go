@@ -24,11 +24,18 @@ type App struct {
 	LogMode         string        `env:"LOG_MODE" env-default:"debug"` // debug, dev or prod
 }
 
+type Authorization struct {
+	PrivateKey string        `env:"PRIVATE_KEY"`
+	PublicKey  string        `env:"PUBLIC_KEY"`
+	TokenTTL   time.Duration `env:"TOKEN_TTL"`
+}
+
 type Config struct {
-	Http     Http
-	Router   Router
-	Database Database
-	App      App
+	Authorization Authorization
+	Http          Http
+	Router        Router
+	Database      Database
+	App           App
 }
 
 func LoadConfig() (*Config, error) {

@@ -25,7 +25,7 @@ func decode[t interface{}](
 	requestData *t,
 ) bool {
 	if err := json.NewDecoder(request.Body).Decode(&requestData); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to decode the request", err)
 		return false
 	}

@@ -38,3 +38,9 @@ apply-prod:
 apply-local:
 	kubectl apply -k k8s/overlays/local
 	kubectl -n book-shelf rollout restart deployment/book-shelf
+
+gen-secrets:
+	openssl genrsa -out secrets/jwt_private.pem 2048
+	openssl rsa -in secrets/jwt_private.pem -pubout -out secrets/jwt_public.pem
+	awk 'BEGIN{printf "PUBLIC_KEY=\""} {gsub(/\r/,""); printf "%s\\n",$0} END{print "\""}' secrets/jwt_public.pem
+	awk 'BEGIN{printf "PRIVATE_KEY=\""} {gsub(/\r/,""); printf "%s\\n",$0} END{print "\""}' secrets/jwt_private.pem

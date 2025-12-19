@@ -34,6 +34,9 @@ services:
     image: book-shelf-service:latest
     environment:
       DB_URL: ${DB_URL}
+      PRIVATE_KEY: ${PRIVATE_KEY}
+      PUBLIC_KEY: ${PUBLIC_KEY}
+      TOKEN_TTL: ${TOKEN_TTL}
       HTTP_PORT: ${HTTP_PORT}
     build:
       context: .

@@ -56,7 +56,7 @@ func (p PublisherHandler) AddPublisher(writer http.ResponseWriter, request *http
 		request.Context(), requestData.Name,
 	)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to add publisher", err)
 		return
 	}
@@ -77,7 +77,7 @@ func (p PublisherHandler) GetPublisher(writer http.ResponseWriter, request *http
 	}
 	publisher, err := p.publisherUsecase.GetPublisher(request.Context(), id)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to get publisher", err, slog.String("publisher_id", idStr))
 		return
 	}
@@ -103,7 +103,7 @@ func (p PublisherHandler) RemovePublisher(writer http.ResponseWriter, request *h
 	}
 
 	if err = p.publisherUsecase.RemovePublisher(request.Context(), id); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to remove publisher", err, slog.String("publisher_id", idStr))
 		return
 	}
@@ -124,7 +124,7 @@ func (p PublisherHandler) ListPublishers(writer http.ResponseWriter, request *ht
 		request.Context(),
 	)
 	if err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to list publishers", err)
 		return
 	}
@@ -165,7 +165,7 @@ func (p PublisherHandler) UpdatePublisher(writer http.ResponseWriter, request *h
 		return
 	}
 	if err = p.publisherUsecase.UpdatePublisher(request.Context(), id, requestData.Name); err != nil {
-		sendError(writer, err)
+		SendError(writer, err)
 		logs.Error("failed to update publisher", err)
 		return
 	}

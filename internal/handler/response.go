@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func sendError(writer http.ResponseWriter, err error) {
+func SendError(writer http.ResponseWriter, err error) {
 	var internalError *model.InternalError
 	code := http.StatusInternalServerError
 	message := "internal server error"

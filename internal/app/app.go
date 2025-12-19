@@ -64,12 +64,30 @@ func Run(cfg *config.Config) error {
 	booksUsecase := books.NewBooksUsecase(booksStorage, authorsUsecase, publishersUsecase, tagsUsecase)
 	booksHandler := handler.NewBookHandler(booksUsecase)
 
+	tokenUsecase, err := usecase.NewTokenUsecase(cfg.Authorization)
+	if err != nil {
+		joinedErrors = errors.Join(joinedErrors, fmt.Errorf("failed to initialize new token usecase: %w", err))
+		cancel()
+	}
+
+	usersStorage := postgres.NewUsersStorage(pool)
+	usersUsecase := usecase.NewUsersUsecase(
+		usecase.UserUsecaseDeps{
+			TokenProvider: tokenUsecase,
+			UserStorage:   usersStorage,
+		},
+	)
+	usersHandler := handler.NewUserHandler(usersUsecase, tokenUsecase)
+
 	router.Setup(
 		newRouter, cfg.Router, router.Deps{
 			PublishersHandler: publisherHandler,
 			AuthorsHandler:    authorsHandler,
 			TagsHandler:       tagsHandler,
 			BooksHandler:      booksHandler,
+			UserHandler:       usersHandler,
+			UserRoleChecker:   usersUsecase,
+			UserIDExtractor:   tokenUsecase,
 		},
 	)
 
