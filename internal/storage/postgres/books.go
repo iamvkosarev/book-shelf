@@ -283,15 +283,27 @@ func (p *BooksStorage) RemoveBook(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (p *BooksStorage) ListBooks(ctx context.Context) ([]model.Book, error) {
-	sql, args, err := p.psql.Select(
+func (p *BooksStorage) ListBooks(ctx context.Context, parameters books.ListBookParameters) ([]model.Book, error) {
+	q := p.psql.Select(
 		columnID,
 		columnPublisherID,
 		columnPublishedAt,
 		columnTitle,
 		columnDescription,
 		columnPrice,
-	).From(tableBooks).ToSql()
+	).From(tableBooks)
+
+	if parameters.AuthorsIDs != nil && len(parameters.AuthorsIDs) > 0 {
+		sub := p.psql.Select(columnBookID).
+			From(tableBooksAuthors).
+			Where(squirrel.Eq{columnAuthorID: parameters.AuthorsIDs}).
+			GroupBy(columnBookID).
+			Having("COUNT(DISTINCT "+columnAuthorID+") = ?", len(parameters.AuthorsIDs))
+
+		q = q.Where(squirrel.Expr(columnID+" IN (?)", sub))
+	}
+
+	sql, args, err := q.ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -348,6 +360,10 @@ func (p *BooksStorage) ListBooks(ctx context.Context) ([]model.Book, error) {
 
 	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+
+	if len(ids) == 0 {
+		return books, nil
 	}
 
 	authorsMap, err := p.listAuthorsByBookIDs(ctx, ids)

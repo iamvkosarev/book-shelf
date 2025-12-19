@@ -32,9 +32,8 @@ type BookUsecase interface {
 	RemoveBook(ctx context.Context, id uuid.UUID) error
 	ListBooks(
 		ctx context.Context,
-		expendAuthorsData bool,
-		expendTagsData bool,
-		expendPublisherData bool,
+		parameters books.ListBookParameters,
+		expandAuthors, expandTags, expandPublisher bool,
 	) ([]model.Book, error)
 }
 
@@ -118,10 +117,10 @@ func (p BookHandler) GetBook(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	expend := parseExpand(request)
-	expendAuthorsData := hasExpand(expend, VarExpendValueAuthors)
-	expendTagsData := hasExpand(expend, VarExpendValueTags)
-	expendPublisherData := hasExpand(expend, VarExpendValuePublisher)
+	expend := parseQueryToStringMap(request, VarExpend)
+	expendAuthorsData := hasKeyInMap(expend, VarExpendValueAuthors)
+	expendTagsData := hasKeyInMap(expend, VarExpendValueTags)
+	expendPublisherData := hasKeyInMap(expend, VarExpendValuePublisher)
 
 	book, err := p.bookUsecase.GetBook(request.Context(), id, expendAuthorsData, expendTagsData, expendPublisherData)
 	if err != nil {
@@ -161,12 +160,30 @@ type ListBooksResponse struct {
 }
 
 func (p BookHandler) ListBooks(writer http.ResponseWriter, request *http.Request) {
-	expend := parseExpand(request)
-	expendAuthorsData := hasExpand(expend, VarExpendValueAuthors)
-	expendTagsData := hasExpand(expend, VarExpendValueTags)
-	expendPublisherData := hasExpand(expend, VarExpendValuePublisher)
+	expend := parseQueryToStringMap(request, VarExpend)
+	expendAuthorsData := hasKeyInMap(expend, VarExpendValueAuthors)
+	expendTagsData := hasKeyInMap(expend, VarExpendValueTags)
+	expendPublisherData := hasKeyInMap(expend, VarExpendValuePublisher)
 
-	books, err := p.bookUsecase.ListBooks(request.Context(), expendAuthorsData, expendTagsData, expendPublisherData)
+	authors, err := parseQueryToUUIDs(request, VarAuthorID)
+	if err != nil {
+		sendError(writer, err)
+		return
+	}
+	authorsIDs := make([]string, 0, len(authors))
+	for id := range authors {
+		authorsIDs = append(authorsIDs, authors[id].String())
+	}
+	slog.Info("search for authors", slog.String("authors_ids", strings.Join(authorsIDs, ",")))
+
+	parameters := books.ListBookParameters{
+		AuthorsIDs: authors,
+	}
+
+	books, err := p.bookUsecase.ListBooks(
+		request.Context(), parameters,
+		expendAuthorsData, expendTagsData, expendPublisherData,
+	)
 	if err != nil {
 		sendError(writer, err)
 		logs.Error("failed to list books", err)
@@ -226,26 +243,6 @@ func (p BookHandler) UpdateBook(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 	sendOk(writer)
-}
-
-func parseExpand(r *http.Request) map[string]struct{} {
-	raw := r.URL.Query().Get("expand")
-	set := make(map[string]struct{})
-	if raw == "" {
-		return set
-	}
-	for _, part := range strings.Split(raw, ",") {
-		p := strings.TrimSpace(part)
-		if p != "" {
-			set[p] = struct{}{}
-		}
-	}
-	return set
-}
-
-func hasExpand(set map[string]struct{}, key string) bool {
-	_, ok := set[key]
-	return ok
 }
 
 func getBookResponse(

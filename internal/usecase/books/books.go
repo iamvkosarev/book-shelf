@@ -28,12 +28,16 @@ type UpdateBookPatch struct {
 	Price       *float64
 }
 
+type ListBookParameters struct {
+	AuthorsIDs []uuid.UUID
+}
+
 type BooksStorage interface {
 	AddBook(ctx context.Context, input CreateBookInput) (uuid.UUID, error)
 	GetBook(ctx context.Context, id uuid.UUID) (model.Book, error)
 	UpdateBook(ctx context.Context, id uuid.UUID, patch UpdateBookPatch) error
 	RemoveBook(ctx context.Context, id uuid.UUID) error
-	ListBooks(ctx context.Context) ([]model.Book, error)
+	ListBooks(ctx context.Context, parameters ListBookParameters) ([]model.Book, error)
 }
 
 type AuthorsUsecase interface {
@@ -173,11 +177,10 @@ func (p *BooksUsecase) RemoveBook(ctx context.Context, id uuid.UUID) error {
 
 func (p *BooksUsecase) ListBooks(
 	ctx context.Context,
-	expandAuthors bool,
-	expandTags bool,
-	expandPublisher bool,
+	parameters ListBookParameters,
+	expandAuthors, expandTags, expandPublisher bool,
 ) ([]model.Book, error) {
-	books, err := p.booksStorage.ListBooks(ctx)
+	books, err := p.booksStorage.ListBooks(ctx, parameters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list books from storage: %w", err)
 	}
