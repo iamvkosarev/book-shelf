@@ -9,8 +9,7 @@ var (
 	ErrPublisherNotFound      = NewInternalError(http.StatusNotFound, "publisher not found")
 
 	ErrAuthorInvalidFields = NewInternalError(
-		http.StatusBadRequest, "author must have first_name, "+
-			"last_name or pseudonym",
+		http.StatusBadRequest, "author must have first_name, last_name or pseudonym",
 	)
 	ErrAuthorAlreadyExists = NewInternalError(http.StatusConflict, "author already exists")
 	ErrAuthorNotFound      = NewInternalError(http.StatusNotFound, "author not found")
