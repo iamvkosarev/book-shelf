@@ -39,7 +39,7 @@ func NewPersonHandler(usecase PersonUsecase) *PersonHandler {
 type AddPersonRequest struct {
 	FirstName  string `json:"first_name" validate:"required,min=1,max=100"`
 	LastName   string `json:"last_name" validate:"required,min=1,max=100"`
-	MiddleName string `json:"middle_name" validate:"min=0,max=100"`
+	MiddleName string `json:"middle_name" validate:"omitempty,max=100"`
 }
 
 type AddPersonResponse struct {
