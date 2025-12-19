@@ -35,7 +35,7 @@ func NewAuthorsStorage(pool *pgxpool.Pool) *AuthorsStorage {
 }
 
 func (p *AuthorsStorage) AddAuthor(ctx context.Context, input usecase.AddAuthorInput) (uuid.UUID, error) {
-	if authorIdentityCount(input.FirstName, input.LastName, input.Pseudonym) != 1 {
+	if authorIdentityCount(input.FirstName, input.LastName, input.Pseudonym) == 0 {
 		return uuid.Nil, model.ErrAuthorInvalidFields
 	}
 
