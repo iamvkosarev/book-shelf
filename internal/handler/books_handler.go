@@ -273,17 +273,11 @@ func getBookResponse(
 		authorsResponse := make([]AuthorResponse, len(book.Authors))
 		for i, author := range book.Authors {
 			authorResponse := AuthorResponse{
-				ID:        author.ID,
-				PersonID:  author.PersonID,
-				Pseudonym: author.Pseudonym,
-			}
-			if author.PersonID != uuid.Nil {
-				authorResponse.PersonResponse = &PersonResponse{
-					ID:         author.Person.ID,
-					FirstName:  author.Person.FirstName,
-					LastName:   author.Person.LastName,
-					MiddleName: author.Person.MiddleName,
-				}
+				ID:         author.ID,
+				FirstName:  author.FirstName,
+				LastName:   author.LastName,
+				MiddleName: author.MiddleName,
+				Pseudonym:  author.Pseudonym,
 			}
 			authorsResponse[i] = authorResponse
 		}

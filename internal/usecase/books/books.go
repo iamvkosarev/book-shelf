@@ -41,7 +41,7 @@ type BooksStorage interface {
 }
 
 type AuthorsUsecase interface {
-	GetAuthor(ctx context.Context, id uuid.UUID, expandPerson bool) (model.Author, error)
+	GetAuthor(ctx context.Context, id uuid.UUID) (model.Author, error)
 }
 type PublishersUsecase interface {
 	GetPublisher(ctx context.Context, id uuid.UUID) (model.Publisher, error)
@@ -77,7 +77,7 @@ func (p *BooksUsecase) AddBook(ctx context.Context, input CreateBookInput) (uuid
 		}
 	}
 	for _, authorID := range input.AuthorsIDs {
-		if _, err := p.authorsUsecase.GetAuthor(ctx, authorID, false); err != nil {
+		if _, err := p.authorsUsecase.GetAuthor(ctx, authorID); err != nil {
 			return uuid.Nil, fmt.Errorf("failed to validate author %s: %w", authorID, err)
 		}
 	}
@@ -117,7 +117,7 @@ func (p *BooksUsecase) GetBook(
 	if expandAuthors && len(book.AuthorsIDs) > 0 {
 		authors := make([]model.Author, 0, len(book.AuthorsIDs))
 		for _, aID := range book.AuthorsIDs {
-			author, err := p.authorsUsecase.GetAuthor(ctx, aID, true)
+			author, err := p.authorsUsecase.GetAuthor(ctx, aID)
 			if err != nil {
 				return model.Book{}, fmt.Errorf("failed to expand author %s: %w", aID, err)
 			}
@@ -149,7 +149,7 @@ func (p *BooksUsecase) UpdateBook(ctx context.Context, id uuid.UUID, patch Updat
 	}
 	if patch.AuthorsIDs != nil {
 		for _, aID := range patch.AuthorsIDs {
-			if _, err := p.authorsUsecase.GetAuthor(ctx, aID, false); err != nil {
+			if _, err := p.authorsUsecase.GetAuthor(ctx, aID); err != nil {
 				return fmt.Errorf("failed to validate author %s: %w", aID, err)
 			}
 		}
@@ -201,7 +201,7 @@ func (p *BooksUsecase) ListBooks(
 		if expandAuthors && len(book.AuthorsIDs) > 0 {
 			authors := make([]model.Author, 0, len(book.AuthorsIDs))
 			for _, aID := range book.AuthorsIDs {
-				author, err := p.authorsUsecase.GetAuthor(ctx, aID, true)
+				author, err := p.authorsUsecase.GetAuthor(ctx, aID)
 				if err != nil {
 					return nil, fmt.Errorf("failed to expand author %s: %w", aID, err)
 				}

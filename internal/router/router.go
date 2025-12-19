@@ -11,7 +11,6 @@ import (
 type Deps struct {
 	PublishersHandler *handler.PublisherHandler
 	AuthorsHandler    *handler.AuthorHandler
-	PersonsHandler    *handler.PersonHandler
 	TagsHandler       *handler.TagHandler
 	BooksHandler      *handler.BookHandler
 }
@@ -32,12 +31,6 @@ func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
 	rt.HandleFunc("/publishers/{id}", deps.PublishersHandler.GetPublisher).Methods(http.MethodGet)
 	rt.HandleFunc("/publishers/{id}", deps.PublishersHandler.UpdatePublisher).Methods(http.MethodPut)
 	rt.HandleFunc("/publishers/{id}", deps.PublishersHandler.RemovePublisher).Methods(http.MethodDelete)
-
-	rt.HandleFunc("/persons", deps.PersonsHandler.AddPerson).Methods(http.MethodPost)
-	rt.HandleFunc("/persons", deps.PersonsHandler.ListPersons).Methods(http.MethodGet)
-	rt.HandleFunc("/persons/{id}", deps.PersonsHandler.GetPerson).Methods(http.MethodGet)
-	rt.HandleFunc("/persons/{id}", deps.PersonsHandler.UpdatePerson).Methods(http.MethodPut)
-	rt.HandleFunc("/persons/{id}", deps.PersonsHandler.RemovePerson).Methods(http.MethodDelete)
 
 	rt.HandleFunc("/authors", deps.AuthorsHandler.AddAuthor).Methods(http.MethodPost)
 	rt.HandleFunc("/authors", deps.AuthorsHandler.ListAuthors).Methods(http.MethodGet)

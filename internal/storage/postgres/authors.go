@@ -6,18 +6,20 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/iamvkosarev/book-shelf/internal/model"
+	"github.com/iamvkosarev/book-shelf/internal/usecase"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"strings"
 )
 
 const (
 	tableAuthors = "authors"
 
-	columnPersonID  = "person_id"
-	columnPseudonym = "pseudonym"
+	columnPseudonym  = "pseudonym"
+	columnFirstName  = "first_name"
+	columnLastName   = "last_name"
+	columnMiddleName = "middle_name"
 )
 
 type AuthorsStorage struct {
@@ -32,18 +34,30 @@ func NewAuthorsStorage(pool *pgxpool.Pool) *AuthorsStorage {
 	}
 }
 
-func (p *AuthorsStorage) AddAuthor(ctx context.Context, personID uuid.UUID, pseudonym string) (uuid.UUID, error) {
-	if personID == uuid.Nil && strings.TrimSpace(pseudonym) == "" {
+func (p *AuthorsStorage) AddAuthor(ctx context.Context, input usecase.AddAuthorInput) (uuid.UUID, error) {
+	if authorIdentityCount(input.FirstName, input.LastName, input.Pseudonym) != 1 {
 		return uuid.Nil, model.ErrAuthorInvalidFields
 	}
-	sql, args, err := p.psql.Insert(tableAuthors).Columns(
-		columnPersonID, columnPseudonym,
-	).Values(toPostgresUUID(personID), toPostgresText(pseudonym)).Suffix(
-		"RETURNING " + columnID,
-	).ToSql()
+
+	firstName := toNonEmptyTrimmedPtr(input.FirstName)
+	lastName := toNonEmptyTrimmedPtr(input.LastName)
+	pseudonym := toNonEmptyTrimmedPtr(input.Pseudonym)
+
+	var middleName any = nil
+	if input.MiddleName != nil {
+		middleName = strPrtToAny(input.MiddleName)
+	}
+
+	sql, args, err := p.psql.
+		Insert(tableAuthors).
+		Columns(columnFirstName, columnLastName, columnMiddleName, columnPseudonym).
+		Values(firstName, lastName, middleName, pseudonym).
+		Suffix("RETURNING " + columnID).
+		ToSql()
 	if err != nil {
 		return uuid.Nil, err
 	}
+
 	var id uuid.UUID
 	if err = p.pool.QueryRow(ctx, sql, args...).Scan(&id); err != nil {
 		var pgErr *pgconn.PgError
@@ -51,86 +65,123 @@ func (p *AuthorsStorage) AddAuthor(ctx context.Context, personID uuid.UUID, pseu
 			switch pgErr.Code {
 			case "23505":
 				return uuid.Nil, model.ErrAuthorAlreadyExists
+			case "23514":
+				return uuid.Nil, model.ErrAuthorInvalidFields
 			}
 		}
 		return uuid.Nil, err
 	}
+
 	return id, nil
 }
 
 func (p *AuthorsStorage) GetAuthor(ctx context.Context, id uuid.UUID) (model.Author, error) {
-	sql, args, err := p.psql.Select(
-		columnID, columnPersonID, columnPseudonym,
-	).From(tableAuthors).Where(squirrel.Eq{columnID: id}).ToSql()
+	sql, args, err := p.psql.
+		Select(columnID, columnFirstName, columnLastName, columnMiddleName, columnPseudonym).
+		From(tableAuthors).
+		Where(squirrel.Eq{columnID: id}).
+		ToSql()
 	if err != nil {
 		return model.Author{}, err
 	}
 
 	var (
-		author    model.Author
-		personID  pgtype.UUID
-		pseudonym pgtype.Text
+		a                                          model.Author
+		firstName, lastName, middleName, pseudonym pgtype.Text
 	)
 
 	if err = p.pool.QueryRow(ctx, sql, args...).Scan(
-		&author.ID, &personID, &pseudonym,
+		&a.ID, &firstName, &lastName, &middleName, &pseudonym,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Author{}, model.ErrAuthorNotFound
 		}
 		return model.Author{}, err
 	}
-	if personID.Valid {
-		author.PersonID = personID.Bytes
-	} else {
-		author.PersonID = uuid.Nil
-	}
-	if pseudonym.Valid {
-		author.Pseudonym = pseudonym.String
-	} else {
-		author.Pseudonym = ""
-	}
-	return author, nil
+
+	a.FirstName = postgresTextToStrPtr(firstName)
+	a.LastName = postgresTextToStrPtr(lastName)
+	a.MiddleName = postgresTextToStrPtr(middleName)
+	a.Pseudonym = postgresTextToStrPtr(pseudonym)
+
+	return a, nil
 }
 
-func (p *AuthorsStorage) UpdateAuthor(ctx context.Context, id uuid.UUID, author model.Author) error {
-	sql, args, err := p.psql.Update(tableAuthors).
-		Set(columnPersonID, toPostgresUUID(author.PersonID)).
-		Set(columnPseudonym, toPostgresText(author.Pseudonym)).
+func (p *AuthorsStorage) UpdateAuthor(ctx context.Context, id uuid.UUID, input usecase.UpdateAuthorInput) error {
+	q := p.psql.Update(tableAuthors).Where(squirrel.Eq{columnID: id})
+
+	sets := 0
+
+	if input.FirstName != nil {
+		q = q.Set(columnFirstName, strPrtToAny(input.FirstName))
+		sets++
+	}
+	if input.LastName != nil {
+		q = q.Set(columnLastName, strPrtToAny(input.LastName))
+		sets++
+	}
+	if input.Pseudonym != nil {
+		q = q.Set(columnPseudonym, strPrtToAny(input.Pseudonym))
+		sets++
+	}
+	if input.MiddleName != nil {
+		q = q.Set(columnMiddleName, strPrtToAny(input.MiddleName))
+		sets++
+	}
+
+	if sets == 0 {
+		return nil
+	}
+
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return err
+	}
+
+	tag, err := p.pool.Exec(ctx, sql, args...)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case "23505":
+				return model.ErrAuthorAlreadyExists
+			case "23514":
+				return model.ErrAuthorInvalidFields
+			}
+		}
+		return err
+	}
+
+	if tag.RowsAffected() == 0 {
+		return model.ErrAuthorNotFound
+	}
+
+	return nil
+}
+
+func (p *AuthorsStorage) RemoveAuthor(ctx context.Context, id uuid.UUID) error {
+	sql, args, err := p.psql.
+		Delete(tableAuthors).
 		Where(squirrel.Eq{columnID: id}).
 		ToSql()
 	if err != nil {
 		return err
 	}
 
-	commandTag, err := p.pool.Exec(ctx, sql, args...)
+	tag, err := p.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return model.ErrAuthorAlreadyExists
-		}
 		return err
 	}
-
-	if commandTag.RowsAffected() == 0 {
+	if tag.RowsAffected() == 0 {
 		return model.ErrAuthorNotFound
 	}
-	return nil
-}
 
-func (p *AuthorsStorage) RemoveAuthor(ctx context.Context, id uuid.UUID) error {
-	sql, args, err := p.psql.Delete(tableAuthors).Where(squirrel.Eq{columnID: id}).ToSql()
-	if err != nil {
-		return err
-	}
-	if _, err = p.pool.Exec(ctx, sql, args...); err != nil {
-		return err
-	}
 	return nil
 }
 
 func (p *AuthorsStorage) ListAuthors(ctx context.Context) ([]model.Author, error) {
-	sql, args, err := p.psql.Select(columnID, columnPersonID, columnPseudonym).
+	sql, args, err := p.psql.
+		Select(columnID, columnFirstName, columnLastName, columnMiddleName, columnPseudonym).
 		From(tableAuthors).
 		ToSql()
 	if err != nil {
@@ -146,28 +197,35 @@ func (p *AuthorsStorage) ListAuthors(ctx context.Context) ([]model.Author, error
 	var authors []model.Author
 	for rows.Next() {
 		var (
-			a      model.Author
-			person pgtype.UUID
-			pseudo pgtype.Text
+			a                                          model.Author
+			firstName, lastName, middleName, pseudonym pgtype.Text
 		)
 
-		if err = rows.Scan(&a.ID, &person, &pseudo); err != nil {
+		if err = rows.Scan(&a.ID, &firstName, &lastName, &middleName, &pseudonym); err != nil {
 			return nil, err
 		}
 
-		if person.Valid {
-			a.PersonID = person.Bytes
-		} else {
-			a.PersonID = uuid.Nil
-		}
-
-		if pseudo.Valid {
-			a.Pseudonym = pseudo.String
-		} else {
-			a.Pseudonym = ""
-		}
+		a.FirstName = postgresTextToStrPtr(firstName)
+		a.LastName = postgresTextToStrPtr(lastName)
+		a.MiddleName = postgresTextToStrPtr(middleName)
+		a.Pseudonym = postgresTextToStrPtr(pseudonym)
 
 		authors = append(authors, a)
 	}
+
 	return authors, rows.Err()
+}
+
+func authorIdentityCount(firstName, lastName, pseudonym *string) int {
+	count := 0
+	if toNonEmptyTrimmedPtr(firstName) != nil {
+		count++
+	}
+	if toNonEmptyTrimmedPtr(lastName) != nil {
+		count++
+	}
+	if toNonEmptyTrimmedPtr(pseudonym) != nil {
+		count++
+	}
+	return count
 }

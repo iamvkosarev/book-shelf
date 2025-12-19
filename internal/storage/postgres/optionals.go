@@ -7,19 +7,34 @@ import (
 	"time"
 )
 
-func toPostgresUUID(id uuid.UUID) pgtype.UUID {
-	if id == uuid.Nil {
-		return pgtype.UUID{Valid: false}
+func toNonEmptyTrimmedPtr(s *string) *string {
+	if s == nil {
+		return nil
 	}
-	return pgtype.UUID{Bytes: [16]byte(id), Valid: true}
+	v := strings.TrimSpace(*s)
+	if v == "" {
+		return nil
+	}
+	return &v
 }
 
-func toPostgresText(str string) pgtype.Text {
-	str = strings.TrimSpace(str)
-	if str == "" {
-		return pgtype.Text{Valid: false}
+func postgresTextToStrPtr(t pgtype.Text) *string {
+	if !t.Valid {
+		return nil
 	}
-	return pgtype.Text{String: str, Valid: true}
+	v := t.String
+	return &v
+}
+
+func strPrtToAny(s *string) any {
+	if s == nil {
+		return nil
+	}
+	v := strings.TrimSpace(*s)
+	if v == "" {
+		return nil
+	}
+	return v
 }
 
 func toPostgresUUIDPtr(id *uuid.UUID) pgtype.UUID {

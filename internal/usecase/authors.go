@@ -2,76 +2,84 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/iamvkosarev/book-shelf/internal/model"
 )
 
+type AddAuthorInput struct {
+	FirstName  *string
+	LastName   *string
+	MiddleName *string
+	Pseudonym  *string
+}
+
+type UpdateAuthorInput struct {
+	FirstName  *string
+	LastName   *string
+	MiddleName *string
+	Pseudonym  *string
+}
+
 type AuthorsStorage interface {
-	AddAuthor(ctx context.Context, personID uuid.UUID, pseudonym string) (uuid.UUID, error)
+	AddAuthor(ctx context.Context, input AddAuthorInput) (uuid.UUID, error)
 	GetAuthor(ctx context.Context, id uuid.UUID) (model.Author, error)
-	UpdateAuthor(ctx context.Context, id uuid.UUID, author model.Author) error
+	UpdateAuthor(ctx context.Context, id uuid.UUID, input UpdateAuthorInput) error
 	RemoveAuthor(ctx context.Context, id uuid.UUID) error
 	ListAuthors(ctx context.Context) ([]model.Author, error)
 }
 
 type AuthorsUsecase struct {
-	storage       AuthorsStorage
-	personUsecase *PersonsUsecase
+	storage AuthorsStorage
 }
 
-func NewAuthorsUsecase(storage AuthorsStorage, personUsecase *PersonsUsecase) *AuthorsUsecase {
+func NewAuthorsUsecase(storage AuthorsStorage) *AuthorsUsecase {
 	return &AuthorsUsecase{
-		storage:       storage,
-		personUsecase: personUsecase,
+		storage: storage,
 	}
 }
 
 func (p *AuthorsUsecase) AddAuthor(
-	ctx context.Context, personID uuid.UUID, pseudonym string,
+	ctx context.Context, input AddAuthorInput,
 ) (uuid.UUID, error) {
-	_, err := p.personUsecase.GetPerson(ctx, personID)
-	if err != nil && !errors.Is(err, model.ErrPersonNotFound) {
-		return uuid.Nil, err
-	}
-	if errors.Is(err, model.ErrPersonNotFound) && pseudonym == "" {
+	if !hasIdentity(input.FirstName, input.LastName, input.Pseudonym) {
 		return uuid.Nil, model.ErrAuthorInvalidFields
 	}
-	id, err := p.storage.AddAuthor(ctx, personID, pseudonym)
+	id, err := p.storage.AddAuthor(ctx, input)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to add author to storage: %w", err)
 	}
 	return id, nil
 }
 
-func (p *AuthorsUsecase) GetAuthor(ctx context.Context, id uuid.UUID, expendPersonData bool) (model.Author, error) {
+func (p *AuthorsUsecase) GetAuthor(ctx context.Context, id uuid.UUID) (model.Author, error) {
 	author, err := p.storage.GetAuthor(ctx, id)
 	if err != nil {
 		return model.Author{}, fmt.Errorf("failed to get author from storage: %w", err)
 	}
-	if expendPersonData && author.PersonID != uuid.Nil {
-		person, err := p.personUsecase.GetPerson(ctx, author.PersonID)
-		if err != nil {
-			return model.Author{}, fmt.Errorf("failed to get person from storage: id %s; %w", author.PersonID, err)
-		}
-		author.Person = person
-	}
 	return author, nil
 }
 
-func (p *AuthorsUsecase) UpdateAuthor(ctx context.Context, id, personID uuid.UUID, pseudonym string) error {
+func (p *AuthorsUsecase) UpdateAuthor(ctx context.Context, id uuid.UUID, input UpdateAuthorInput) error {
 	author, err := p.storage.GetAuthor(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get author from storage: %w", err)
 	}
-	if pseudonym != "" {
-		author.Pseudonym = pseudonym
+	if input.FirstName != nil {
+		author.FirstName = input.FirstName
 	}
-	if personID != uuid.Nil {
-		author.PersonID = personID
+	if input.LastName != nil {
+		author.LastName = input.LastName
 	}
-	err = p.storage.UpdateAuthor(ctx, id, author)
+	if input.Pseudonym != nil {
+		author.Pseudonym = input.Pseudonym
+	}
+
+	if !hasIdentity(author.FirstName, author.LastName, author.Pseudonym) {
+		return model.ErrAuthorInvalidFields
+	}
+
+	err = p.storage.UpdateAuthor(ctx, id, input)
 	if err != nil {
 		return fmt.Errorf("failed to update author in storage: %w", err)
 	}
@@ -86,21 +94,16 @@ func (p *AuthorsUsecase) RemoveAuthor(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (p *AuthorsUsecase) ListAuthors(ctx context.Context, expendPersonData bool) ([]model.Author, error) {
+func (p *AuthorsUsecase) ListAuthors(ctx context.Context) ([]model.Author, error) {
 	authors, err := p.storage.ListAuthors(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get list Authors from storage: %w", err)
 	}
-	if expendPersonData {
-		for i, author := range authors {
-			if author.PersonID != uuid.Nil {
-				person, err := p.personUsecase.GetPerson(ctx, author.PersonID)
-				if err != nil {
-					return nil, fmt.Errorf("failed to get person from storage: id %s; %w", author.PersonID, err)
-				}
-				authors[i].Person = person
-			}
-		}
-	}
 	return authors, nil
+}
+
+func hasIdentity(first, last, pseudonym *string) bool {
+	return (first != nil && *first != "") ||
+		(last != nil && *last != "") ||
+		(pseudonym != nil && *pseudonym != "")
 }

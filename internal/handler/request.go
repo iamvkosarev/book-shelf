@@ -14,7 +14,6 @@ const (
 	VarID                   = "id"
 	VarExpend               = "expand"
 	VarAuthorID             = "author_id"
-	VarExpendValuePerson    = "person"
 	VarExpendValueAuthors   = "authors"
 	VarExpendValuePublisher = "publisher"
 	VarExpendValueTags      = "tags"

@@ -47,12 +47,9 @@ func Run(cfg *config.Config) error {
 	} else {
 		log.Info("start connect postgres")
 	}
-	personsStorage := postgres.NewPersonsStorage(pool)
-	personsUsecase := usecase.NewPersonsUsecase(personsStorage)
-	personsHandler := handler.NewPersonHandler(personsUsecase)
 
 	authorsStorage := postgres.NewAuthorsStorage(pool)
-	authorsUsecase := usecase.NewAuthorsUsecase(authorsStorage, personsUsecase)
+	authorsUsecase := usecase.NewAuthorsUsecase(authorsStorage)
 	authorsHandler := handler.NewAuthorHandler(authorsUsecase)
 
 	publishersStorage := postgres.NewPublishersStorage(pool)
@@ -71,7 +68,6 @@ func Run(cfg *config.Config) error {
 		newRouter, cfg.Router, router.Deps{
 			PublishersHandler: publisherHandler,
 			AuthorsHandler:    authorsHandler,
-			PersonsHandler:    personsHandler,
 			TagsHandler:       tagsHandler,
 			BooksHandler:      booksHandler,
 		},

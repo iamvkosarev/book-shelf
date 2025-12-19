@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/iamvkosarev/book-shelf/internal/model"
+	"github.com/iamvkosarev/book-shelf/internal/usecase"
 	"github.com/iamvkosarev/book-shelf/pkg/logs"
 	"log/slog"
 	"net/http"
@@ -17,13 +18,11 @@ const (
 )
 
 type AuthorUsecase interface {
-	AddAuthor(
-		ctx context.Context, personID uuid.UUID, pseudonym string,
-	) (uuid.UUID, error)
-	GetAuthor(ctx context.Context, id uuid.UUID, expendPersonData bool) (model.Author, error)
-	UpdateAuthor(ctx context.Context, id, personID uuid.UUID, pseudonym string) error
+	AddAuthor(ctx context.Context, input usecase.AddAuthorInput) (uuid.UUID, error)
+	GetAuthor(ctx context.Context, id uuid.UUID) (model.Author, error)
+	UpdateAuthor(ctx context.Context, id uuid.UUID, input usecase.UpdateAuthorInput) error
 	RemoveAuthor(ctx context.Context, id uuid.UUID) error
-	ListAuthors(ctx context.Context, expendPersonData bool) ([]model.Author, error)
+	ListAuthors(ctx context.Context) ([]model.Author, error)
 }
 
 type AuthorHandler struct {
@@ -39,8 +38,10 @@ func NewAuthorHandler(usecase AuthorUsecase) *AuthorHandler {
 }
 
 type AddAuthorRequest struct {
-	PersonID  uuid.UUID `json:"person_id"`
-	Pseudonym string    `json:"pseudonym" validate:"lte=100,gte=0"`
+	FirstName  *string `json:"first_name" validate:"omitempty,max=100"`
+	LastName   *string `json:"last_name" validate:"omitempty,max=100"`
+	MiddleName *string `json:"middle_name" validate:"omitempty,max=100"`
+	Pseudonym  *string `json:"pseudonym" validate:"omitempty,max=100"`
 }
 
 type AddAuthorResponse struct {
@@ -55,7 +56,13 @@ func (p AuthorHandler) AddAuthor(writer http.ResponseWriter, request *http.Reque
 	if validationErr(writer, p.validate, requestData) {
 		return
 	}
-	id, err := p.authorUsecase.AddAuthor(request.Context(), requestData.PersonID, requestData.Pseudonym)
+	input := usecase.AddAuthorInput{
+		FirstName:  requestData.FirstName,
+		LastName:   requestData.LastName,
+		MiddleName: requestData.MiddleName,
+		Pseudonym:  requestData.Pseudonym,
+	}
+	id, err := p.authorUsecase.AddAuthor(request.Context(), input)
 	if err != nil {
 		sendError(writer, err)
 		logs.Error("failed to add author", err)
@@ -65,10 +72,11 @@ func (p AuthorHandler) AddAuthor(writer http.ResponseWriter, request *http.Reque
 }
 
 type AuthorResponse struct {
-	ID             uuid.UUID       `json:"id"`
-	PersonID       uuid.UUID       `json:"person_id"`
-	Pseudonym      string          `json:"pseudonym" validate:"min=0,max=100"`
-	PersonResponse *PersonResponse `json:"person"`
+	ID         uuid.UUID `json:"id"`
+	FirstName  *string   `json:"first_name"`
+	LastName   *string   `json:"last_name"`
+	MiddleName *string   `json:"middle_name"`
+	Pseudonym  *string   `json:"pseudonym"`
 }
 
 func (p AuthorHandler) GetAuthor(writer http.ResponseWriter, request *http.Request) {
@@ -84,10 +92,7 @@ func (p AuthorHandler) GetAuthor(writer http.ResponseWriter, request *http.Reque
 		return
 	}
 
-	expendStr := request.URL.Query().Get(VarExpend)
-	expendPersonData := expendStr == VarExpendValuePerson
-
-	author, err := p.authorUsecase.GetAuthor(request.Context(), id, expendPersonData)
+	author, err := p.authorUsecase.GetAuthor(request.Context(), id)
 	if err != nil {
 		sendError(writer, err)
 		logs.Error("failed to get author", err, slog.String("author_id", idStr))
@@ -95,18 +100,11 @@ func (p AuthorHandler) GetAuthor(writer http.ResponseWriter, request *http.Reque
 	}
 
 	response := AuthorResponse{
-		ID:        author.ID,
-		PersonID:  author.PersonID,
-		Pseudonym: author.Pseudonym,
-	}
-
-	if expendPersonData && author.PersonID != uuid.Nil {
-		response.PersonResponse = &PersonResponse{
-			ID:         author.Person.ID,
-			FirstName:  author.Person.FirstName,
-			LastName:   author.Person.LastName,
-			MiddleName: author.Person.MiddleName,
-		}
+		ID:         author.ID,
+		FirstName:  author.FirstName,
+		LastName:   author.LastName,
+		MiddleName: author.MiddleName,
+		Pseudonym:  author.Pseudonym,
 	}
 
 	sendOkJSON(writer, response)
@@ -138,10 +136,7 @@ type ListAuthorsResponse struct {
 }
 
 func (p AuthorHandler) ListAuthors(writer http.ResponseWriter, request *http.Request) {
-	expendStr := request.URL.Query().Get(VarExpend)
-	expendPersonData := expendStr == VarExpendValuePerson
-
-	authors, err := p.authorUsecase.ListAuthors(request.Context(), expendPersonData)
+	authors, err := p.authorUsecase.ListAuthors(request.Context())
 	if err != nil {
 		sendError(writer, err)
 		logs.Error("failed to list authors", err)
@@ -152,18 +147,11 @@ func (p AuthorHandler) ListAuthors(writer http.ResponseWriter, request *http.Req
 	}
 	for i, author := range authors {
 		response.Authors[i] = AuthorResponse{
-			ID:        author.ID,
-			PersonID:  author.PersonID,
-			Pseudonym: author.Pseudonym,
-		}
-
-		if expendPersonData && author.PersonID != uuid.Nil {
-			response.Authors[i].PersonResponse = &PersonResponse{
-				ID:         author.Person.ID,
-				FirstName:  author.Person.FirstName,
-				LastName:   author.Person.LastName,
-				MiddleName: author.Person.MiddleName,
-			}
+			ID:         author.ID,
+			FirstName:  author.FirstName,
+			LastName:   author.LastName,
+			MiddleName: author.MiddleName,
+			Pseudonym:  author.Pseudonym,
 		}
 	}
 
@@ -171,8 +159,10 @@ func (p AuthorHandler) ListAuthors(writer http.ResponseWriter, request *http.Req
 }
 
 type UpdateAuthorRequest struct {
-	PersonID  uuid.UUID `json:"person_id"`
-	Pseudonym string    `json:"pseudonym" validate:"min=0,max=100"`
+	FirstName  *string `json:"first_name" validate:"omitempty,max=100"`
+	LastName   *string `json:"last_name" validate:"omitempty,max=100"`
+	MiddleName *string `json:"middle_name" validate:"omitempty,max=100"`
+	Pseudonym  *string `json:"pseudonym" validate:"omitempty,max=100"`
 }
 
 func (p AuthorHandler) UpdateAuthor(writer http.ResponseWriter, request *http.Request) {
@@ -194,11 +184,17 @@ func (p AuthorHandler) UpdateAuthor(writer http.ResponseWriter, request *http.Re
 	if validationErr(writer, p.validate, requestData) {
 		return
 	}
-	if err = p.authorUsecase.UpdateAuthor(
-		request.Context(), id, requestData.PersonID, requestData.Pseudonym,
-	); err != nil {
+
+	input := usecase.UpdateAuthorInput{
+		FirstName:  requestData.FirstName,
+		LastName:   requestData.LastName,
+		MiddleName: requestData.MiddleName,
+		Pseudonym:  requestData.Pseudonym,
+	}
+
+	if err = p.authorUsecase.UpdateAuthor(request.Context(), id, input); err != nil {
 		sendError(writer, err)
-		logs.Error("failed to update author", err)
+		logs.Error("failed to update author", err, slog.String("author_id", idStr))
 		return
 	}
 	sendOk(writer)

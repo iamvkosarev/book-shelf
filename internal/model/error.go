@@ -8,10 +8,10 @@ var (
 	ErrPublisherAlreadyExists = NewInternalError(http.StatusConflict, "publisher already exists")
 	ErrPublisherNotFound      = NewInternalError(http.StatusNotFound, "publisher not found")
 
-	ErrPersonAlreadyExists = NewInternalError(http.StatusConflict, "person already exists")
-	ErrPersonNotFound      = NewInternalError(http.StatusNotFound, "person not found")
-
-	ErrAuthorInvalidFields = NewInternalError(http.StatusBadRequest, "author must have person id or pseudonym")
+	ErrAuthorInvalidFields = NewInternalError(
+		http.StatusBadRequest, "author must have first_name, "+
+			"last_name or pseudonym",
+	)
 	ErrAuthorAlreadyExists = NewInternalError(http.StatusConflict, "author already exists")
 	ErrAuthorNotFound      = NewInternalError(http.StatusNotFound, "author not found")
 
