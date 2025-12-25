@@ -24,6 +24,7 @@ const (
 	columnTitle       = "title"
 	columnDescription = "description"
 	columnPrice       = "price"
+	columnMark        = "mark"
 
 	columnBookID   = "book_id"
 	columnAuthorID = "author_id"
@@ -60,6 +61,7 @@ func (p *BooksStorage) AddBook(ctx context.Context, input books.CreateBookInput)
 			columnTitle,
 			columnDescription,
 			columnPrice,
+			columnMark,
 		).
 		Values(
 			toPostgresUUIDPtr(input.PublisherID),
@@ -67,6 +69,7 @@ func (p *BooksStorage) AddBook(ctx context.Context, input books.CreateBookInput)
 			input.Title,
 			toPostgresTextPtr(input.Description),
 			toPostgresFloat8Ptr(input.Price),
+			toPostgresInt2Ptr(input.Mark),
 		).
 		Suffix("RETURNING " + columnID).
 		ToSql()
@@ -100,6 +103,7 @@ func (p *BooksStorage) GetBook(ctx context.Context, id uuid.UUID) (model.Book, e
 		columnTitle,
 		columnDescription,
 		columnPrice,
+		columnMark,
 	).From(tableBooks).Where(squirrel.Eq{columnID: id}).ToSql()
 	if err != nil {
 		return model.Book{}, err
@@ -111,6 +115,7 @@ func (p *BooksStorage) GetBook(ctx context.Context, id uuid.UUID) (model.Book, e
 		publishedAt pgtype.Date
 		description pgtype.Text
 		price       pgtype.Float8
+		mark        pgtype.Int2
 	)
 
 	if err = p.pool.QueryRow(ctx, sql, args...).Scan(
@@ -120,6 +125,7 @@ func (p *BooksStorage) GetBook(ctx context.Context, id uuid.UUID) (model.Book, e
 		&book.Title,
 		&description,
 		&price,
+		&mark,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Book{}, model.ErrBookNotFound
@@ -155,6 +161,13 @@ func (p *BooksStorage) GetBook(ctx context.Context, id uuid.UUID) (model.Book, e
 		book.Price = nil
 	}
 
+	if mark.Valid {
+		f := mark.Int16
+		book.Mark = &f
+	} else {
+		book.Mark = nil
+	}
+
 	authorsIDs, err := p.getBookAuthorIDs(ctx, id)
 	if err != nil {
 		return model.Book{}, err
@@ -176,6 +189,7 @@ func (p *BooksStorage) UpdateBook(ctx context.Context, id uuid.UUID, patch books
 		patch.Title == nil &&
 		patch.Description == nil &&
 		patch.Price == nil &&
+		patch.Mark == nil &&
 		patch.AuthorsIDs == nil &&
 		patch.TagsIDs == nil {
 		return model.ErrBookInvalidFields
@@ -212,6 +226,10 @@ func (p *BooksStorage) UpdateBook(ctx context.Context, id uuid.UUID, patch books
 	}
 	if patch.Price != nil {
 		upd = upd.Set(columnPrice, toPostgresFloat8Ptr(patch.Price))
+		changed = true
+	}
+	if patch.Mark != nil {
+		upd = upd.Set(columnMark, toPostgresInt2Ptr(patch.Mark))
 		changed = true
 	}
 
@@ -291,6 +309,7 @@ func (p *BooksStorage) ListBooks(ctx context.Context, parameters books.ListBookP
 		columnTitle,
 		columnDescription,
 		columnPrice,
+		columnMark,
 	).From(tableBooks)
 
 	if parameters.AuthorsIDs != nil && len(parameters.AuthorsIDs) > 0 {
@@ -324,6 +343,7 @@ func (p *BooksStorage) ListBooks(ctx context.Context, parameters books.ListBookP
 			publishedAt pgtype.Date
 			description pgtype.Text
 			price       pgtype.Float8
+			mark        pgtype.Int2
 		)
 
 		if err := rows.Scan(
@@ -333,6 +353,7 @@ func (p *BooksStorage) ListBooks(ctx context.Context, parameters books.ListBookP
 			&book.Title,
 			&description,
 			&price,
+			&mark,
 		); err != nil {
 			return nil, err
 		}
@@ -352,6 +373,11 @@ func (p *BooksStorage) ListBooks(ctx context.Context, parameters books.ListBookP
 		if price.Valid {
 			f := price.Float64
 			book.Price = &f
+		}
+
+		if mark.Valid {
+			f := mark.Int16
+			book.Mark = &f
 		}
 
 		books = append(books, book)

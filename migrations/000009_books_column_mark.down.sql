@@ -1,0 +1,3 @@
+ALTER TABLE books
+	DROP COLUMN IF EXISTS mark,
+    DROP CONSTRAINT IF EXISTS books_mark_chk;

@@ -57,6 +57,7 @@ type AddBookRequest struct {
 	Title       string      `json:"title" validate:"required,min=1,max=100"`
 	Description *string     `json:"description" validate:"omitempty,max=1000"`
 	Price       *float64    `json:"price"`
+	Mark        *int16      `json:"mark"`
 }
 
 type AddBookResponse struct {
@@ -79,6 +80,7 @@ func (p BookHandler) AddBook(writer http.ResponseWriter, request *http.Request) 
 		Title:       requestData.Title,
 		Description: requestData.Description,
 		Price:       requestData.Price,
+		Mark:        requestData.Mark,
 	}
 
 	id, err := p.bookUsecase.AddBook(request.Context(), input)
@@ -99,6 +101,7 @@ type BookResponse struct {
 	Title       string             `json:"title"`
 	Description *string            `json:"description"`
 	Price       *float64           `json:"price"`
+	Mark        *int16             `json:"mark"`
 	Publisher   *PublisherResponse `json:"publisher"`
 	Authors     []AuthorResponse   `json:"authors"`
 	Tags        []TagResponse      `json:"tags"`
@@ -207,6 +210,7 @@ type UpdateBookRequest struct {
 	Title       *string     `json:"title" validate:"omitempty,min=1,max=100"`
 	Description *string     `json:"description" validate:"omitempty,max=1000"`
 	Price       *float64    `json:"price"`
+	Mark        *int16      `json:"mark"`
 }
 
 func (p BookHandler) UpdateBook(writer http.ResponseWriter, request *http.Request) {
@@ -236,6 +240,7 @@ func (p BookHandler) UpdateBook(writer http.ResponseWriter, request *http.Reques
 		Title:       requestData.Title,
 		Description: requestData.Description,
 		Price:       requestData.Price,
+		Mark:        requestData.Mark,
 	}
 	if err = p.bookUsecase.UpdateBook(request.Context(), id, patch); err != nil {
 		SendError(writer, err)
@@ -260,6 +265,7 @@ func getBookResponse(
 		Title:       book.Title,
 		Description: book.Description,
 		Price:       book.Price,
+		Mark:        book.Mark,
 	}
 
 	if expendPublisherData && book.PublisherID != nil && *book.PublisherID != uuid.Nil {

@@ -12,7 +12,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o service ./cmd/main.go
+RUN go build -o service ./cmd/book-shelf/main.go
 
 # ==== Runtime ====
 FROM scratch AS service

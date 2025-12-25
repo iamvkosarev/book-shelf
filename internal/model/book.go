@@ -14,6 +14,7 @@ type Book struct {
 	Title       string
 	Description *string
 	Price       *float64
+	Mark        *int16
 	Publisher   *Publisher
 	Authors     []Author
 	Tags        []Tag

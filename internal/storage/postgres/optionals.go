@@ -58,6 +58,13 @@ func toPostgresFloat8Ptr(v *float64) pgtype.Float8 {
 	return pgtype.Float8{Float64: *v, Valid: true}
 }
 
+func toPostgresInt2Ptr(v *int16) pgtype.Int2 {
+	if v == nil {
+		return pgtype.Int2{Valid: false}
+	}
+	return pgtype.Int2{Int16: *v, Valid: true}
+}
+
 func toPostgresDatePtr(v *time.Time) pgtype.Date {
 	if v == nil {
 		return pgtype.Date{Valid: false}

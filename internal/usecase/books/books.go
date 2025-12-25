@@ -16,6 +16,7 @@ type CreateBookInput struct {
 	PublishedAt *time.Time
 	Description *string
 	Price       *float64
+	Mark        *int16
 }
 
 type UpdateBookPatch struct {
@@ -26,6 +27,7 @@ type UpdateBookPatch struct {
 	Title       *string
 	Description *string
 	Price       *float64
+	Mark        *int16
 }
 
 type ListBookParameters struct {
