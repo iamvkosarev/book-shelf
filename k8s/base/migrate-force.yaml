@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: book-shelf-migrate-force
+  namespace: book-shelf
+spec:
+  restartPolicy: Never
+  containers:
+    - name: migrate
+      image: iamvkosarev/book-shelf-migrations:latest
+      env:
+        - name: DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: book-shelf-env
+              key: DB_URL
+      command: ["sh", "-c", "migrate -path /migrations -database \"$DB_URL\" force 8"]
