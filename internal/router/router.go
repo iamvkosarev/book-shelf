@@ -42,37 +42,37 @@ func Setup(rt *mux.Router, cfg config.Router, deps Deps) (http.Handler, error) {
 	rt.HandleFunc("/user/register/email", deps.UserHandler.RegisterUserByEmail).Methods(http.MethodPost)
 	rt.HandleFunc("/user/token/email", deps.UserHandler.GetUserTokenByEmail).Methods(http.MethodPost)
 
-	rt.HandleFunc("/publishers", deps.PublishersHandler.ListPublishers).Methods(http.MethodGet)
-	rt.HandleFunc("/publishers/{id}", deps.PublishersHandler.GetPublisher).Methods(http.MethodGet)
+	private := rt.NewRoute().Subrouter()
+	private.Use(middleware.RequireAuth(deps.UserIDExtractor))
+	private.Use(middleware.RequireAnyRole(deps.UserRoleChecker, []model.Role{model.RoleAdmin}))
 
-	rt.HandleFunc("/authors", deps.AuthorsHandler.ListAuthors).Methods(http.MethodGet)
-	rt.HandleFunc("/authors/{id}", deps.AuthorsHandler.GetAuthor).Methods(http.MethodGet)
+	private.HandleFunc("/publishers", deps.PublishersHandler.ListPublishers).Methods(http.MethodGet)
+	private.HandleFunc("/publishers/{id}", deps.PublishersHandler.GetPublisher).Methods(http.MethodGet)
 
-	rt.HandleFunc("/tags", deps.TagsHandler.ListTags).Methods(http.MethodGet)
-	rt.HandleFunc("/tags/{id}", deps.TagsHandler.GetTag).Methods(http.MethodGet)
+	private.HandleFunc("/authors", deps.AuthorsHandler.ListAuthors).Methods(http.MethodGet)
+	private.HandleFunc("/authors/{id}", deps.AuthorsHandler.GetAuthor).Methods(http.MethodGet)
 
-	rt.HandleFunc("/books", deps.BooksHandler.ListBooks).Methods(http.MethodGet)
-	rt.HandleFunc("/books/{id}", deps.BooksHandler.GetBook).Methods(http.MethodGet)
+	private.HandleFunc("/tags", deps.TagsHandler.ListTags).Methods(http.MethodGet)
+	private.HandleFunc("/tags/{id}", deps.TagsHandler.GetTag).Methods(http.MethodGet)
 
-	write := rt.NewRoute().Subrouter()
-	write.Use(middleware.RequireAuth(deps.UserIDExtractor))
-	write.Use(middleware.RequireAnyRole(deps.UserRoleChecker, []model.Role{model.RoleAdmin}))
+	private.HandleFunc("/books", deps.BooksHandler.ListBooks).Methods(http.MethodGet)
+	private.HandleFunc("/books/{id}", deps.BooksHandler.GetBook).Methods(http.MethodGet)
 
-	write.HandleFunc("/publishers", deps.PublishersHandler.AddPublisher).Methods(http.MethodPost)
-	write.HandleFunc("/publishers/{id}", deps.PublishersHandler.UpdatePublisher).Methods(http.MethodPut)
-	write.HandleFunc("/publishers/{id}", deps.PublishersHandler.RemovePublisher).Methods(http.MethodDelete)
+	private.HandleFunc("/publishers", deps.PublishersHandler.AddPublisher).Methods(http.MethodPost)
+	private.HandleFunc("/publishers/{id}", deps.PublishersHandler.UpdatePublisher).Methods(http.MethodPut)
+	private.HandleFunc("/publishers/{id}", deps.PublishersHandler.RemovePublisher).Methods(http.MethodDelete)
 
-	write.HandleFunc("/authors", deps.AuthorsHandler.AddAuthor).Methods(http.MethodPost)
-	write.HandleFunc("/authors/{id}", deps.AuthorsHandler.UpdateAuthor).Methods(http.MethodPut)
-	write.HandleFunc("/authors/{id}", deps.AuthorsHandler.RemoveAuthor).Methods(http.MethodDelete)
+	private.HandleFunc("/authors", deps.AuthorsHandler.AddAuthor).Methods(http.MethodPost)
+	private.HandleFunc("/authors/{id}", deps.AuthorsHandler.UpdateAuthor).Methods(http.MethodPut)
+	private.HandleFunc("/authors/{id}", deps.AuthorsHandler.RemoveAuthor).Methods(http.MethodDelete)
 
-	write.HandleFunc("/tags", deps.TagsHandler.AddTag).Methods(http.MethodPost)
-	write.HandleFunc("/tags/{id}", deps.TagsHandler.UpdateTag).Methods(http.MethodPut)
-	write.HandleFunc("/tags/{id}", deps.TagsHandler.RemoveTag).Methods(http.MethodDelete)
+	private.HandleFunc("/tags", deps.TagsHandler.AddTag).Methods(http.MethodPost)
+	private.HandleFunc("/tags/{id}", deps.TagsHandler.UpdateTag).Methods(http.MethodPut)
+	private.HandleFunc("/tags/{id}", deps.TagsHandler.RemoveTag).Methods(http.MethodDelete)
 
-	write.HandleFunc("/books", deps.BooksHandler.AddBook).Methods(http.MethodPost)
-	write.HandleFunc("/books/{id}", deps.BooksHandler.UpdateBook).Methods(http.MethodPut)
-	write.HandleFunc("/books/{id}", deps.BooksHandler.RemoveBook).Methods(http.MethodDelete)
+	private.HandleFunc("/books", deps.BooksHandler.AddBook).Methods(http.MethodPost)
+	private.HandleFunc("/books/{id}", deps.BooksHandler.UpdateBook).Methods(http.MethodPut)
+	private.HandleFunc("/books/{id}", deps.BooksHandler.RemoveBook).Methods(http.MethodDelete)
 
 	return rt, nil
 }
